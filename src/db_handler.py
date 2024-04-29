@@ -119,3 +119,7 @@ def add_skin(skin_id: str, skin_tag: str, skin_name: str, weapon_type: int, rari
 
     if commit:
         WORKING_DB.commit()
+
+
+def add_tradeup():
+    pass

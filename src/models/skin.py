@@ -11,9 +11,6 @@ Skin class type for use with the database
 
 """
 
-import src.db_handler
-
-
 
 class Skin:
     def __init__(self, internal_id: int, skin_id: int, skin_name: str, weapon_type: int, rarity: int, min_wear: float,
@@ -27,4 +24,4 @@ class Skin:
         self.max_wear = max_wear
         self.crate_id = crate_id
 
-        self.crate = 0
+        self.crate = None

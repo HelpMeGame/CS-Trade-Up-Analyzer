@@ -3,6 +3,44 @@ import json
 import db_handler
 from models.weapon_classifiers import str_to_weapon, get_rarity
 
+MANUAL_SETS = [
+    ["CSGO_set_dust", "set_dust"],
+    ["CSGO_set_aztec", "set_aztec"],
+    ["CSGO_set_vertigo", "set_vertigo"],
+    ["CSGO_set_inferno", "set_inferno"],
+    ["CSGO_set_militia", "set_militia"],
+    ["CSGO_set_nuke", "set_nuke"],
+    ["CSGO_set_office", "set_office"],
+    ["CSGO_set_assault", "set_assault"],
+    ["CSGO_set_dust_2", "set_dust_2"],
+    ["CSGO_set_train", "set_train"],
+    ["CSGO_set_mirage", "set_mirage"],
+    ["CSGO_set_italy", "set_italy"],
+    ["CSGO_set_lake", "set_lake"],
+    ["CSGO_set_safehouse", "set_safehouse"],
+    ["CSGO_set_bank", "set_bank"],
+    ["CSGO_set_overpass", "set_overpass"],
+    ["CSGO_set_cobblestone", "set_cobblestone"],
+    ["CSGO_set_baggage", "set_baggage"],
+    ["CSGO_set_cache", "set_cache"],
+    ["CSGO_set_gods_and_monsters", "set_gods_and_monsters"],
+    ["CSGO_set_chopshop", 'set_chopshop'],
+    ["CSGO_set_kimono", "set_kimono"],
+    ["CSGO_set_nuke_2", "set_nuke_2"],
+    ["CSGO_set_inferno_2", "set_inferno_2"],
+    ["CSGO_set_xraymachine", "set_xraymachine"],
+    ["CSGO_set_blacksite", "set_blacksite"],
+    ["CSGO_set_stmarc", "set_stmarc"],
+    ["CSGO_set_canals", "set_canals"],
+    ["CSGO_set_norse", "set_norse"],
+    ["CSGO_set_dust_2_2021", "set_dust_2_2021"],
+    ["CSGO_set_mirage_2021", "set_mirage_2021"],
+    ["CSGO_set_op10_ancient", "set_op10_ancient"],
+    ["CSGO_set_train_2021", "set_train_2021"],
+    ["CSGO_set_vertigo_2021", "set_vertigo_2021"],
+    ["CSGO_set_anubis", "set_anubis"]
+]
+
 
 def gather_file_data(items_game_path: str, csgo_english_path: str) -> [dict, dict]:
     with open(items_game_path, "r") as f:
@@ -22,6 +60,10 @@ def collect_crates(item_json: dict, translation_json: dict) -> None:
 
     :return: Nothing. All discovered crates are added to the database.
     """
+
+    for crate_id, set_id in MANUAL_SETS:
+        name = translation_json['tokens'][crate_id.lower()]
+        db_handler.add_crate(crate_id.lower(), name, set_id)
 
     for item in item_json['items']:
         # get object
@@ -75,7 +117,7 @@ def collect_skins(item_json: dict, translation_json: dict) -> None:
 
             # add item to items_by_name dictionary
             items_by_name[item['name'].lower()] = (
-                item['description_tag'].lower().replace("#", ""),
+                translation_json['tokens'][item['description_tag'].lower().replace("#", "")],
                 wear_remap_min,
                 wear_remap_max
             )
