@@ -13,15 +13,15 @@ Skin class type for use with the database
 
 
 class Skin:
-    def __init__(self, internal_id: int, skin_id: int, skin_name: str, weapon_type: int, rarity: int, min_wear: float,
-                 max_wear: float, crate_id: int):
-        self.internal_id = internal_id
-        self.skin_id = skin_id
-        self.skin_name = skin_name
-        self.weapon_type = weapon_type
-        self.rarity = rarity
-        self.min_wear = min_wear
-        self.max_wear = max_wear
-        self.crate_id = crate_id
+    def __init__(self, skin_data):
+        self.internal_id = skin_data[0]
+        self.skin_id = skin_data[1]
+        self.skin_tag = skin_data[2]
+        self.skin_name = skin_data[3]
+        self.weapon_type = skin_data[4]
+        self.rarity = skin_data[5]
+        self.min_wear = skin_data[6]
+        self.max_wear = skin_data[7]
+        self.crate_id = skin_data[8]
 
         self.crate = None

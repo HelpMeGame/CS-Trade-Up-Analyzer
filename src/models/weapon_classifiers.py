@@ -96,13 +96,13 @@ WeaponIntToStr = {
 
 
 class RarityToInt(enum.Enum):
-    Common = 0
-    Uncommon = 1
-    Rare = 2
-    Mythical = 3
-    Legendary = 4
-    Ancient = 5
-    Immortal = 6
+    Common = 0      # Consumer
+    Uncommon = 1    # Mil-Spec
+    Rare = 2        # Restricted
+    Mythical = 3    # Classified
+    Legendary = 4   # Covert
+    Ancient = 5     # Exceedingly Rare
+    Immortal = 6    # Contraband
 
 
 class WearsToStr(enum.StrEnum):
@@ -113,15 +113,42 @@ class WearsToStr(enum.StrEnum):
     BATTLESCARRED = "Battle-Scarred"
 
 
-str_to_rarity = {
-    "common": RarityToInt.Common,
-    "uncommon": RarityToInt.Uncommon,
-    "rare": RarityToInt.Rare,
-    "mythical": RarityToInt.Mythical,
-    "legendary": RarityToInt.Legendary,
-    "ancient": RarityToInt.Ancient,
-    "immortal": RarityToInt.Immortal
+class WearsToInt(enum.Enum):
+    FACTORYNEW = 0
+    MINWEAR = 1
+    FIELDTESTED = 2
+    WELLWORN = 3
+    BATTLESCARRED = 4
+
+
+str_to_wear = {
+    "Factory New": WearsToInt.FACTORYNEW,
+    "Minimal Wear": WearsToInt.MINWEAR,
+    "Field-Tested": WearsToInt.FIELDTESTED,
+    "Well-Worn": WearsToInt.WELLWORN,
+    "Battle-Scarred": WearsToInt.BATTLESCARRED
 }
+
+
+wear_int_enum_to_str_enum = {
+    WearsToInt.FACTORYNEW: WearsToStr.FACTORYNEW,
+    WearsToInt.MINWEAR: WearsToStr.MINWEAR,
+    WearsToInt.FIELDTESTED: WearsToStr.FIELDTESTED,
+    WearsToInt.WELLWORN: WearsToStr.WELLWORN,
+    WearsToInt.BATTLESCARRED: WearsToStr.BATTLESCARRED
+}
+
+
+str_to_rarity = {
+    "common": RarityToInt.Common,        # Consumer
+    "uncommon": RarityToInt.Uncommon,    # Mil-Spec
+    "rare": RarityToInt.Rare,            # Restricted
+    "mythical": RarityToInt.Mythical,    # Classified
+    "legendary": RarityToInt.Legendary,  # Covert
+    "ancient": RarityToInt.Ancient,      # Exceedingly Rare
+    "immortal": RarityToInt.Immortal     # Contraband
+}
+
 
 str_to_weapon = {
     "tec9": WeaponToInt.TEC9,
@@ -192,12 +219,13 @@ def get_rarity(input_str: str) -> RarityToInt | None:
         return None
 
 
-def get_valid_wears(min_wear: float, max_wear: float) -> list[WearsToStr]:
+def get_valid_wears(min_wear: float, max_wear: float, as_int: bool = False) -> list[WearsToStr] | list[WearsToInt]:
     """
     Returns a list of WearsToStr that fit inside the min_wear and max_wear arguments
     :param min_wear: minimum wear value
     :param max_wear:  maximum wear value
-    :return: a list of WearsToStr values with all valid wear string values
+    :param as_int: should the valid wears be integers or strings?
+    :return: a list of WearsToStr or WearsToInt values with all valid wear string values
     """
 
     # create list
@@ -205,22 +233,37 @@ def get_valid_wears(min_wear: float, max_wear: float) -> list[WearsToStr]:
 
     # check Factory New
     if min_wear < 0.07 or 0.07 >= max_wear:
-        valid_wears.append(WearsToStr.FACTORYNEW)
+        if as_int:
+            valid_wears.append(WearsToInt.FACTORYNEW)
+        else:
+            valid_wears.append(WearsToStr.FACTORYNEW)
 
     # check Minimal Wear
     if min_wear < 0.15 and (max_wear >= 0.15 or 0.07 <= max_wear):
-        valid_wears.append(WearsToStr.MINWEAR)
+        if as_int:
+            valid_wears.append(WearsToInt.MINWEAR)
+        else:
+            valid_wears.append(WearsToStr.MINWEAR)
 
     # check Field-Tested
     if min_wear < 0.38 and (max_wear >= 0.38 or 0.15 <= max_wear):
-        valid_wears.append(WearsToStr.FIELDTESTED)
+        if as_int:
+            valid_wears.append(WearsToInt.FIELDTESTED)
+        else:
+            valid_wears.append(WearsToStr.FIELDTESTED)
 
     # check Well-Worn
     if min_wear < 0.45 and (max_wear >= 0.45 or 0.38 <= max_wear):
-        valid_wears.append(WearsToStr.WELLWORN)
+        if as_int:
+            valid_wears.append(WearsToInt.WELLWORN)
+        else:
+            valid_wears.append(WearsToStr.WELLWORN)
 
     # check Battle-Scarred
     if min_wear < 1 and (max_wear >= 1 or 0.45 <= max_wear):
-        valid_wears.append(WearsToStr.BATTLESCARRED)
+        if as_int:
+            valid_wears.append(WearsToInt.BATTLESCARRED)
+        else:
+            valid_wears.append(WearsToStr.BATTLESCARRED)
 
     return valid_wears

@@ -1,3 +1,16 @@
+"""
+
+CS Trade Up Analyzer
+
+src/models/crate.py
+
+Developed by Keagan Bowman
+Copyright 2024
+
+Crate class type for use with the database
+
+"""
+
 class Crate:
     def __init__(self, internal_id: int, crate_name: str, crate_id: int, set_id: str):
         self.internal_id = internal_id

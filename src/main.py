@@ -15,7 +15,10 @@ Steam Community Market price data to identify ideal trade ups with a net positiv
 import os
 import pathlib
 import db_handler
+import market_handler
+import tradeup_generator
 import resource_collector
+
 
 WORKING_PATH = pathlib.Path(os.curdir)
 
@@ -27,6 +30,12 @@ def main():
         os.path.join(WORKING_PATH.absolute(), "data/csgo_english.json")
     )
 
+    if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.creds")):
+        with open(os.path.join(WORKING_PATH.absolute(), "data/.creds"), "r") as f:
+            steam_creds = tuple(f.readlines())
+    else:
+        steam_creds = ("", "")
+
     should_wipe = True
 
     # establish connection to database
@@ -34,10 +43,23 @@ def main():
 
     if should_wipe:
         # collect crate information
+        print("Collecting crate info...")
         resource_collector.collect_crates(items_game, translations)
 
         # collect skin information
+        print("Collecting skin info...")
         resource_collector.collect_skins(items_game, translations)
+
+        # gather prices
+        market_handler.get_prices(steam_creds)
+
+        # find cheapest prices
+        print("Collecting cheapest prices...")
+        market_handler.find_cheapest()
+
+        # generate all possible trade-ups
+        print("Generating trade-ups...")
+        tradeup_generator.generate_tradeups()
 
 
 if __name__ == "__main__":

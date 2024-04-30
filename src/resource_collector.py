@@ -1,8 +1,23 @@
+"""
+
+CS Trade Up Analyzer
+
+src/resource_collector.py
+
+Developed by Keagan Bowman
+Copyright 2024
+
+Collects the resources required for trade up generation
+
+"""
+
 import re
 import json
 import db_handler
 from models.weapon_classifiers import str_to_weapon, get_rarity
 
+# the following is a manually defined list of sets
+# that aren't "crates" but can still have trade ups.
 MANUAL_SETS = [
     ["CSGO_set_dust", "set_dust"],
     ["CSGO_set_aztec", "set_aztec"],
@@ -43,10 +58,12 @@ MANUAL_SETS = [
 
 
 def gather_file_data(items_game_path: str, csgo_english_path: str) -> [dict, dict]:
+    # open and read items_game.txt file
     with open(items_game_path, "r") as f:
         items_game = json.load(f)
         f.close()
 
+    # open and read csgo_english.txt file
     with open(csgo_english_path, "r") as f:
         csgo_english = json.load(f)
         f.close()
@@ -147,6 +164,16 @@ def collect_skins(item_json: dict, translation_json: dict) -> None:
             weapon_type = str_to_weapon[weapon_type].value
 
             name, min_wear, max_wear = items_by_name[skin_name]
+
+            to_replace = [
+                ("Ã¶", "ö"),
+                ("é¾çŽ‹", "龍王"),
+                ("å£±", "壱"),
+                ("å¼", "弐")
+            ]
+
+            for old, new in to_replace:
+                name = name.replace(old, new)
 
             rarity = get_rarity(item_json['paint_kits_rarity'][skin_name]).value
 

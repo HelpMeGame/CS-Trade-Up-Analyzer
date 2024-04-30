@@ -1,3 +1,16 @@
+"""
+
+CS Trade Up Analyzer
+
+src/models/tradeup.py
+
+Developed by Keagan Bowman
+Copyright 2024
+
+Trade up class type for use with the database
+
+"""
+
 from skin import Skin
 
 
