@@ -33,20 +33,34 @@ def find_cheapest() -> None:
                 # loop through all skins in this rarity
                 for skin in skins_by_rarity[rarity]:
                     # attempt to get price from the DB
-                    price = db_handler.get_price(skin.internal_id, wear)
+                    prices = db_handler.get_prices(skin.internal_id, wear)
 
-                     # if there is no valid price, skip this
-                    if price is None:
+                    # if there is no valid price, skip this
+                    if prices is None or prices == {}:
                         continue
 
+                    total = 0
+                    current_price = 0
+
+                    for i in prices:
+                        price, count, _ = i
+
+                        total += count
+                        current_price = price
+
+                        if count >= 10:
+                            break
+
                     # check if this price is lower than the current lowest
-                    if lowest_price is None or price < lowest_price:
+                    if lowest_price is None or (current_price is not None and total >= 10 and current_price < lowest_price):
                         cheapest = skin
-                        lowest_price = price
+                        lowest_price = current_price
 
                 # if the cheapest isn't none, we add it to the db
                 if cheapest is not None:
                     db_handler.add_cheapest(crate.internal_id, cheapest.internal_id, rarity, wear, lowest_price)
+
+    db_handler.WORKING_DB.commit()
 
 
 def get_prices(steam_creds: tuple[str, str]) -> None:

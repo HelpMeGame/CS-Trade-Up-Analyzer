@@ -175,8 +175,43 @@ def collect_skins(item_json: dict, translation_json: dict) -> None:
             for old, new in to_replace:
                 name = name.replace(old, new)
 
-            rarity = get_rarity(item_json['paint_kits_rarity'][skin_name]).value
+            db_handler.add_skin(item, skin_name, name, weapon_type, -1, min_wear, max_wear, case.internal_id)
 
-            db_handler.add_skin(item, skin_name, name, weapon_type, rarity, min_wear, max_wear, case.internal_id)
+    db_handler.WORKING_DB.commit()
+
+
+def collect_rarities(item_json: dict, translation_json: dict):
+    for set_id in item_json['client_loot_lists'].keys():
+        set_data = set_id.split("_")
+
+        rarity = get_rarity(set_data.pop(-1))
+
+        if rarity is None:
+            continue
+
+        set_name = "_".join(set_data)
+
+        try:
+            db_handler.get_crate_from_set(set_name.replace("crate", "set").lower())
+        except TypeError:
+            continue
+
+        for skin in item_json['client_loot_lists'][set_id].keys():
+            db_handler.update_skin_rarity(skin, rarity.value)
+
+    for skin in db_handler.get_skins_by_rarity(-1):
+        rarity = get_rarity(item_json['paint_kits_rarity'][skin.skin_tag])
+        db_handler.update_skin_rarity(skin.skin_id, rarity.value)
+
+    for case in db_handler.get_all_crates():
+        counts = [0 for i in range(0, 6)]
+
+        skins = db_handler.get_skins_by_crate(case.internal_id)
+
+        for skin in skins:
+            counts[skin.rarity] += 1
+
+        db_handler.update_crate_counts(case.internal_id, counts[0], counts[1], counts[2], counts[3], counts[4],
+                                       counts[5])
 
     db_handler.WORKING_DB.commit()

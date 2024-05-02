@@ -97,12 +97,12 @@ WeaponIntToStr = {
 
 class RarityToInt(enum.Enum):
     Common = 0      # Consumer
-    Uncommon = 1    # Mil-Spec
-    Rare = 2        # Restricted
-    Mythical = 3    # Classified
-    Legendary = 4   # Covert
-    Ancient = 5     # Exceedingly Rare
-    Immortal = 6    # Contraband
+    Uncommon = 1    # Industrial
+    Rare = 2        # Mil-Spec
+    Mythical = 3    # Restricted
+    Legendary = 4   # Classified
+    Ancient = 5     # Covert
+    Immortal = 6    # Exceedingly Rare
 
 
 class WearsToStr(enum.StrEnum):
@@ -141,12 +141,12 @@ wear_int_enum_to_str_enum = {
 
 str_to_rarity = {
     "common": RarityToInt.Common,        # Consumer
-    "uncommon": RarityToInt.Uncommon,    # Mil-Spec
-    "rare": RarityToInt.Rare,            # Restricted
-    "mythical": RarityToInt.Mythical,    # Classified
-    "legendary": RarityToInt.Legendary,  # Covert
-    "ancient": RarityToInt.Ancient,      # Exceedingly Rare
-    "immortal": RarityToInt.Immortal     # Contraband
+    "uncommon": RarityToInt.Uncommon,    # Industrial
+    "rare": RarityToInt.Rare,            # Mil-Spec
+    "mythical": RarityToInt.Mythical,    # Restricted
+    "legendary": RarityToInt.Legendary,  # Classified
+    "ancient": RarityToInt.Ancient,      # Covert
+    "immortal": RarityToInt.Immortal     # Exceedingly Rare
 }
 
 

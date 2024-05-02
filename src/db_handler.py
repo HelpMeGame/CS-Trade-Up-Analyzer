@@ -11,6 +11,7 @@ Database operation handler for requests
 
 """
 
+import json
 import sqlite3
 from src.models.skin import Skin
 from models.crate import Crate
@@ -31,7 +32,7 @@ def connect_to_db(path: str, wipe_db=False):
         cursor.execute("DROP TABLE IF EXISTS skins")
         cursor.execute("DROP TABLE IF EXISTS tradeups")
         cursor.execute("DROP TABLE IF EXISTS tradeup_skins")
-        cursor.execute("DROP TABLE IF EXISTS cheapest")
+        # cursor.execute("DROP TABLE IF EXISTS cheapest")
         # cursor.execute("DROP TABLE IF EXISTS prices")
 
     cursor.execute("""
@@ -39,7 +40,13 @@ def connect_to_db(path: str, wipe_db=False):
         internal_id INTEGER PRIMARY KEY AUTOINCREMENT,
         crate_id TEXT,
         crate_name TEXT,
-        set_id TEXT
+        set_id TEXT,
+        rarity_0_count INTEGER,
+        rarity_1_count INTEGER,
+        rarity_2_count INTEGER,
+        rarity_3_count INTEGER,
+        rarity_4_count INTEGER,
+        rarity_5_count INTEGER
                    );""")
 
     cursor.execute("""
@@ -90,7 +97,7 @@ def connect_to_db(path: str, wipe_db=False):
         internal_id INTEGER PRIMARY KEY AUTOINCREMENT,
         skin_id INTEGER,
         wear_rating INTEGER,
-        market_id INTEGER UNIQUE,
+        market_id INTEGER,
         price_data TEXT,
         FOREIGN KEY (skin_id) REFERENCES skins(internal_id)
     );
@@ -115,6 +122,19 @@ def add_crate(crate_id, crate_name, set_id, commit=False):
         WORKING_DB.commit()
 
 
+def update_crate_counts(crate_id: int, rarity_0: int, rarity_1: int, rarity_2: int, rarity_3: int, rarity_4: int,
+                        rarity_5: int, commit: bool = False):
+    cursor = WORKING_DB.cursor()
+
+    cursor.execute("UPDATE crates SET rarity_0_count = ?, rarity_1_count = ?, rarity_2_count = ?, rarity_3_count = ?, rarity_4_count = ?, rarity_5_count = ? WHERE internal_id = ?",
+                   (rarity_0, rarity_1, rarity_2, rarity_3, rarity_4, rarity_5, crate_id))
+
+    cursor.close()
+
+    if commit:
+        WORKING_DB.commit()
+
+
 def get_crate_from_internal(internal_id: int):
     cursor = WORKING_DB.cursor()
 
@@ -122,7 +142,7 @@ def get_crate_from_internal(internal_id: int):
 
     cursor.close()
 
-    return Crate(crate[0], crate[1], crate[2], crate[3])
+    return Crate(crate)
 
 
 def get_crate_from_set(set_id: str):
@@ -132,7 +152,7 @@ def get_crate_from_set(set_id: str):
 
     cursor.close()
 
-    return Crate(crate[0], crate[1], crate[2], crate[3])
+    return Crate(crate)
 
 
 def get_all_crates():
@@ -144,7 +164,7 @@ def get_all_crates():
 
     crates = []
     for crate in data:
-        crates.append(Crate(crate[0], crate[1], crate[2], crate[3]))
+        crates.append(Crate(crate))
 
     return crates
 
@@ -157,6 +177,17 @@ def add_skin(skin_id: str, skin_tag: str, skin_name: str, weapon_type: int, rari
     cursor.execute("INSERT INTO skins (skin_id, skin_tag, skin_name, weapon_type, rarity, min_wear, max_wear, crate_id)"
                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                    (skin_id, skin_tag, skin_name, weapon_type, rarity, min_wear, max_wear, crate_id))
+
+    cursor.close()
+
+    if commit:
+        WORKING_DB.commit()
+
+
+def update_skin_rarity(skin_id: str, rarity: int, commit: bool = False):
+    cursor = WORKING_DB.cursor()
+
+    cursor.execute("UPDATE skins SET rarity = ? WHERE skin_id = ?", (rarity, skin_id))
 
     cursor.close()
 
@@ -206,12 +237,21 @@ def get_skins_by_crate(internal_id: int):
     return skins
 
 
-def get_price(skin_id:int, wear:int):
+def get_prices(skin_id: int, wear: int):
     cursor = WORKING_DB.cursor()
 
-    data = cursor.execute("SELECT price_data FROM prices WHERE skin_id = ? AND wear_rating = ?", (skin_id, wear)).fetchone()
+    data = cursor.execute("SELECT price_data FROM prices WHERE skin_id = ? AND wear_rating = ?",
+                          (skin_id, wear)).fetchone()
 
     cursor.close()
+
+    if data is None:
+        return None
+
+    data = json.loads(data[0])
+
+    if data == {} or data == []:
+        return None
 
     return data
 
@@ -220,7 +260,7 @@ def add_tradeup(skin_ids, commit=False):
     cursor = WORKING_DB.cursor()
 
     cursor.execute("INSERT INTO tradeups (roi) VALUES (?)", (0,))
-    tradeup_id = cursor.execute("SELECT internal_id FROM tradeups WHERE ROWID = ?", (cursor.lastrowid,)).fetchone()
+    tradeup_id = cursor.execute("SELECT internal_id FROM tradeups WHERE ROWID = ?", (cursor.lastrowid,)).fetchone()[0]
 
     for skin in skin_ids:
         cursor.execute("INSERT INTO tradeup_skins (tradeup_id, skin_id) VALUES (?, ?)", (tradeup_id, skin))
@@ -253,3 +293,14 @@ def add_cheapest(crate_id: int, skin_id: int, rarity: int, wear: int, price: flo
 
     if commit:
         WORKING_DB.commit()
+
+
+def get_cheapest_by_crate_rarity_and_wear(crate_id: int, rarity: int, wear: int):
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute("SELECT skin_id, price FROM cheapest WHERE crate_id = ? AND rarity = ? AND wear = ?",
+                          (crate_id, rarity, wear)).fetchone()
+
+    cursor.close()
+
+    return data

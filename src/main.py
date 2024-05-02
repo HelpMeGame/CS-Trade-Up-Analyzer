@@ -50,12 +50,16 @@ def main():
         print("Collecting skin info...")
         resource_collector.collect_skins(items_game, translations)
 
+        # collect rarities
+        print("Collecting skin rarities...")
+        resource_collector.collect_rarities(items_game, translations)
+
         # gather prices
-        market_handler.get_prices(steam_creds)
+        # market_handler.get_prices(steam_creds)
 
         # find cheapest prices
         print("Collecting cheapest prices...")
-        market_handler.find_cheapest()
+        # market_handler.find_cheapest()
 
         # generate all possible trade-ups
         print("Generating trade-ups...")
