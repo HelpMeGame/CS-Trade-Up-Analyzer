@@ -49,7 +49,7 @@ def main():
     else:
         steam_creds = ("", "")
 
-    should_wipe = False
+    should_wipe = True
 
     # establish connection to database
     db_handler.connect_to_db(os.path.join(WORKING_PATH.absolute(), "data/skins.db"), wipe_db=should_wipe)
@@ -96,23 +96,26 @@ def main():
             print("Trade up not found")
             continue
 
-        print(f"== Trade Up {tradeup.internal_id} ==\n"
+        print(f"\n\n\n"
+              f"== Trade Up {tradeup.internal_id} ==\n"
               f"Target: {tradeup.goal_skin.skin_name} ({wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]})\n"
               f"\n"
               f"Simulation Results:\n"
               f"\n"
               f"10:\n"
-              f"\t> ROI: {tradeup.roi_10}\n"
-              f"\t> Profit: {tradeup.profit_10}\n"
+              f"\t> ROI: {tradeup.roi_10 * 100}%\n"
+              f"\t> Profit: ${tradeup.profit_10}\n"
               f"100:\n"
-              f"\t> ROI: {tradeup.roi_100}\n"
-              f"\t> Profit: {tradeup.profit_100}\n"
+              f"\t> ROI: {tradeup.roi_100 * 100}%\n"
+              f"\t> Profit: ${tradeup.profit_100}\n"
               f"\n"
               f"Inputs:\n"
               f"\n"
-              f"\t> {tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_1.weapon_type]} \"{tradeup.skin_1.skin_name}\"\n"
-              f"\t> {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\"\n"
-              f"\n")
+              f"\t> {tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_1.weapon_type]} \"{tradeup.skin_1.skin_name}\"\n")
+
+        if tradeup.skin_2 is not None:
+            print(f"\t> {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\"\n"
+                  f"\n")
 
 
 if __name__ == "__main__":

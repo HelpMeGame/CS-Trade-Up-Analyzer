@@ -269,6 +269,18 @@ def get_skin_prices_by_crate_rarity_and_wear(crate_id: int, rarity: int, wear: i
     return skins, prices
 
 
+def get_skin_by_id(internal_id: int):
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute("SELECT * FROM skins WHERE internal_id = ?", (internal_id,)).fetchone()
+
+    cursor.close()
+
+    if data is None:
+        return None
+
+    return Skin(data)
+
 def get_prices(skin_id: int, wear: int):
     cursor = WORKING_DB.cursor()
 

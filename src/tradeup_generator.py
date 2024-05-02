@@ -38,6 +38,8 @@ def generate_tradeups():
                 else:
                     lowest_skin_id, lowest_value = data
 
+                skin_ids = [lowest_skin_id]
+
                 # get this skin's value
                 skin_value = db_handler.get_prices(skin.internal_id, wear.value)
 
@@ -47,22 +49,11 @@ def generate_tradeups():
                 else:
                     continue
 
-                # set min count to 1
-                best_count = 1
+                # set min count to 10
+                best_count = 10
 
                 # find highest possible combination that could make money (increases chances)
-                while best_count <= 10 and best_count * skin_value < skin_value:
-                    best_count += 1
-
-                # get the remaining amount
-                remaining = skin_value - (best_count * lowest_value)
-
-                # skip where the remaining is less than zero with a best count of 1
-                if remaining <= 0 and best_count == 1:
-                    continue
-
-                # check to ensure we can at least put 3 cent skins in
-                while (10 - best_count) * 0.03 >= remaining and best_count > 0:
+                while best_count > 0 and lowest_value * best_count > skin_value:
                     best_count -= 1
 
                 # skip where best count can't be decreased
@@ -72,20 +63,31 @@ def generate_tradeups():
                 # double-check the remaining value
                 remaining = skin_value - (best_count * lowest_value)
 
-                # get the best filler skin
-                filler_skin, filler_case, filler_skin_cost = find_best_fit(remaining, 10 - best_count, wear.value,
-                                                                           i - 1)
+                if best_count != 10:
+                    # get the best filler skin
+                    filler_skin, filler_case, filler_skin_cost = find_best_fit(skin.crate_id, remaining, 10 - best_count, wear.value,
+                                                                               i - 1)
 
-                # no filler skin available, skip
-                if filler_skin is None:
-                    continue
+                    # no filler skin available, skip
+                    if filler_skin is None:
+                        continue
+                    else:
+                        skin_ids.append(filler_skin)
+
+                    input_cost = (lowest_value * best_count) + ((10 - best_count) * filler_skin_cost)
+
+                    case_2_items, case_2_prices = db_handler.get_skin_prices_by_crate_rarity_and_wear(filler_case, i,
+                                                                                                      wear.value)
+                else:
+                    # in the instance where we can make money with 10 of the same skin
+                    case_2_items = []
+                    case_2_prices = []
+                    input_cost = lowest_value * 10
 
                 # get case information
-                case = db_handler.get_crate_from_internal(skin.crate_id)
+                case = db_handler.get_crate_from_internal(db_handler.get_skin_by_id(lowest_skin_id).crate_id)
 
                 case_1_items, case_1_prices = db_handler.get_skin_prices_by_crate_rarity_and_wear(case.internal_id, i,
-                                                                                                  wear.value)
-                case_2_items, case_2_prices = db_handler.get_skin_prices_by_crate_rarity_and_wear(filler_case, i,
                                                                                                   wear.value)
 
                 # calculate success chance
@@ -93,19 +95,18 @@ def generate_tradeups():
 
                 chance = best_count / total_tickets
 
-                input_cost = lowest_value + filler_skin_cost
-
                 roi_10, roi_100, profit_10, profit_100 = simulate(input_cost, case_1_prices, case_2_prices,
                                                                   total_tickets, best_count)
 
                 # add tradeup to DB
-                db_handler.add_tradeup([skin.internal_id, filler_skin], skin.internal_id, wear.value, best_count, chance, roi_10, profit_10, roi_100, profit_100)
+                db_handler.add_tradeup(skin_ids, skin.internal_id, wear.value, best_count, chance, roi_10, profit_10,
+                                       roi_100, profit_100)
 
     # commit trade ups to the DB
     db_handler.WORKING_DB.commit()
 
 
-def find_best_fit(remaining_value, remaining_count, wear, rarity) -> int:
+def find_best_fit(origin_case_id, remaining_value, remaining_count, wear, rarity) -> int:
     # gather all cases, sort by rarity count for this rarity
     cases = db_handler.get_all_crates()
     cases.sort(key=lambda x: x.rarity_counts[rarity])
@@ -119,6 +120,9 @@ def find_best_fit(remaining_value, remaining_count, wear, rarity) -> int:
 
     # loop through all cases
     for case in cases:
+        if case.internal_id == origin_case_id:
+            continue
+
         # set current count to the rarity count for this case
         current_count = case.rarity_counts[rarity]
 
@@ -138,17 +142,17 @@ def find_best_fit(remaining_value, remaining_count, wear, rarity) -> int:
         # set some variables
         cheapest_id, cheapest_price = cheapest
 
+        # calculate profit with current skin
+        current_profit = remaining_value - (cheapest_price * remaining_count)
+
         # assign default best variables
-        if best_skin is None:
+        if best_skin is None and current_profit > 0:
             best_skin = cheapest_id
             best_price = cheapest_price
             best_count = current_count
-            best_profit = remaining_value - (best_price * remaining_count)
+            best_profit = current_profit
             best_case = case.internal_id
             continue
-
-        # calculate profit with current skin
-        current_profit = remaining_value - (cheapest_price * remaining_count)
 
         # no profit, skip this filler skin
         if current_profit <= 0:
@@ -172,7 +176,7 @@ def find_best_fit(remaining_value, remaining_count, wear, rarity) -> int:
             best_case = case.internal_id
 
     # return the best filler skin
-    if (remaining_count * best_price) >= remaining_value:
+    if best_price is None or remaining_count * best_price >= remaining_value:
         return None, None, None
     else:
         return best_skin, best_case, best_price
@@ -223,7 +227,7 @@ def simulate(input_costs: float, case_1_prices: list[float], case_2_prices: list
 
         # get roi for this simulation
         roi = price / input_costs
-        profit = -input_costs + price
+        profit = (-1 * input_costs) + price
 
         # add to roi lists
         roi_100.append(roi)

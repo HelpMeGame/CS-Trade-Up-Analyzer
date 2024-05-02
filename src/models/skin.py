@@ -23,5 +23,3 @@ class Skin:
         self.min_wear = skin_data[6]
         self.max_wear = skin_data[7]
         self.crate_id = skin_data[8]
-
-        self.crate = None

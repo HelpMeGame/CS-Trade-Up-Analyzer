@@ -24,7 +24,11 @@ class TradeUp:
         self.profit_100 = tradeup_data[8]
 
         self.skin_1 = skins[0]
-        self.skin_2 = skins[1]
+
+        if len(skins) > 1:
+            self.skin_2 = skins[1]
+        else:
+            self.skin_2 = None
 
     def calculate_chances(self):
         pass
