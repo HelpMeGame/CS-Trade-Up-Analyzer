@@ -15,6 +15,7 @@ import json
 import sqlite3
 from src.models.skin import Skin
 from models.crate import Crate
+from models.tradeup import TradeUp
 
 WORKING_DB: sqlite3.Connection = None
 
@@ -66,11 +67,15 @@ def connect_to_db(path: str, wipe_db=False):
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tradeups (
         internal_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        goal_skin INTEGER,
+        goal_wear INTEGER,
+        skin_1_count INTEGER,
         chance FLOAT,
         roi_10 FLOAT,
         profit_10 FLOAT,
         roi_100 FLOAT,
-        profit_100 FLOAT
+        profit_100 FLOAT,
+        FOREIGN KEY (goal_skin) REFERENCES skins(internal_id)
     );
     """)
 
@@ -130,8 +135,9 @@ def update_crate_counts(crate_id: int, rarity_0: int, rarity_1: int, rarity_2: i
                         rarity_5: int, commit: bool = False):
     cursor = WORKING_DB.cursor()
 
-    cursor.execute("UPDATE crates SET rarity_0_count = ?, rarity_1_count = ?, rarity_2_count = ?, rarity_3_count = ?, rarity_4_count = ?, rarity_5_count = ? WHERE internal_id = ?",
-                   (rarity_0, rarity_1, rarity_2, rarity_3, rarity_4, rarity_5, crate_id))
+    cursor.execute(
+        "UPDATE crates SET rarity_0_count = ?, rarity_1_count = ?, rarity_2_count = ?, rarity_3_count = ?, rarity_4_count = ?, rarity_5_count = ? WHERE internal_id = ?",
+        (rarity_0, rarity_1, rarity_2, rarity_3, rarity_4, rarity_5, crate_id))
 
     cursor.close()
 
@@ -241,10 +247,11 @@ def get_skins_by_crate(internal_id: int):
     return skins
 
 
-def get_skin_prices_by_crate_rarity_and_wear(crate_id:int, rarity:int, wear:int):
+def get_skin_prices_by_crate_rarity_and_wear(crate_id: int, rarity: int, wear: int):
     cursor = WORKING_DB.cursor()
 
-    data = cursor.execute("SELECT internal_id FROM skins WHERE crate_id = ? AND rarity = ?", (crate_id, rarity)).fetchall()
+    data = cursor.execute("SELECT internal_id FROM skins WHERE crate_id = ? AND rarity = ?",
+                          (crate_id, rarity)).fetchall()
 
     skins = []
     prices = []
@@ -281,10 +288,13 @@ def get_prices(skin_id: int, wear: int):
     return data
 
 
-def add_tradeup(skin_ids: list[int], chance: float, roi_10: float, roi_100: float, profit_10:float , profit_100: float, commit: bool=False):
+def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, skin_1_count, chance: float, roi_10: float, roi_100: float, profit_10: float,
+                profit_100: float, commit: bool = False):
     cursor = WORKING_DB.cursor()
 
-    cursor.execute("INSERT INTO tradeups (chance, roi_10, roi_100, profit_10, profit_100) VALUES (?, ?, ?, ?, ?)", (chance, roi_10, roi_100, profit_10, profit_100))
+    cursor.execute(
+        "INSERT INTO tradeups (goal_skin, goal_wear, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (goal_skin, goal_wear, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100))
     tradeup_id = cursor.execute("SELECT internal_id FROM tradeups WHERE ROWID = ?", (cursor.lastrowid,)).fetchone()[0]
 
     for skin in skin_ids:
@@ -329,3 +339,47 @@ def get_cheapest_by_crate_rarity_and_wear(crate_id: int, rarity: int, wear: int)
     cursor.close()
 
     return data
+
+
+def get_tradeup_by_id(tradeup_id):
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute("SELECT * FROM tradeups WHERE internal_id = ?", (tradeup_id,)).fetchone()
+
+    if data is None:
+        cursor.close()
+        return None
+
+    data = list(data)
+
+    goal_skin_data = cursor.execute("SELECT * FROM skins WHERE internal_id = ?", (data[1],)).fetchone()
+
+    if goal_skin_data is None:
+        cursor.close()
+        return None
+
+    data[1] = Skin(goal_skin_data)
+
+    skin_ids = cursor.execute("SELECT skin_id FROM tradeup_skins WHERE tradeup_id = ?", (tradeup_id,)).fetchall()
+
+    if skin_ids is None:
+        cursor.close()
+        return None
+
+    skin_data = []
+    for skin_id in skin_ids:
+        skin_data.append(cursor.execute("SELECT * FROM skins WHERE internal_id = ?", (skin_id[0],)).fetchone())
+
+    cursor.close()
+
+    if skin_data is None:
+        return None
+
+    skins = []
+    for skin in skin_data:
+        if skin is not None:
+            skins.append(Skin(skin))
+        else:
+            return None
+
+    return TradeUp(data, skins)

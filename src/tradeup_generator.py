@@ -99,7 +99,7 @@ def generate_tradeups():
                                                                   total_tickets, best_count)
 
                 # add tradeup to DB
-                db_handler.add_tradeup([skin.internal_id, filler_skin], chance, roi_10, profit_10, roi_100, profit_100)
+                db_handler.add_tradeup([skin.internal_id, filler_skin], skin.internal_id, wear.value, best_count, chance, roi_10, profit_10, roi_100, profit_100)
 
     # commit trade ups to the DB
     db_handler.WORKING_DB.commit()
@@ -121,6 +121,12 @@ def find_best_fit(remaining_value, remaining_count, wear, rarity) -> int:
     for case in cases:
         # set current count to the rarity count for this case
         current_count = case.rarity_counts[rarity]
+
+        try:
+            if case.rarity_counts[rarity + 1] == 0:
+                continue
+        except IndexError:
+            continue
 
         # find the cheapest skin from this case in this rarity/wear
         cheapest = db_handler.get_cheapest_by_crate_rarity_and_wear(case.internal_id, rarity, wear)

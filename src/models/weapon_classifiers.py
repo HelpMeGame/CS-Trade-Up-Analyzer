@@ -138,6 +138,14 @@ wear_int_enum_to_str_enum = {
     WearsToInt.BATTLESCARRED: WearsToStr.BATTLESCARRED
 }
 
+wear_int_to_enum = {
+    0: WearsToInt.FACTORYNEW,
+    1: WearsToInt.MINWEAR,
+    2: WearsToInt.FIELDTESTED,
+    3: WearsToInt.WELLWORN,
+    4: WearsToInt.BATTLESCARRED
+}
+
 
 str_to_rarity = {
     "common": RarityToInt.Common,        # Consumer

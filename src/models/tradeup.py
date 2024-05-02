@@ -11,13 +11,20 @@ Trade up class type for use with the database
 
 """
 
-from skin import Skin
-
-
 class TradeUp:
-    def __init__(self, internal_id: int, skins: list[Skin]):
-        self.internal_id = internal_id
-        self.skins = skins
+    def __init__(self, tradeup_data: list, skins):
+        self.internal_id = tradeup_data[0]
+        self.goal_skin= tradeup_data[1]
+        self.goal_wear = tradeup_data[2]
+        self.skin_1_count = tradeup_data[3]
+        self.chance = tradeup_data[4]
+        self.roi_10 = tradeup_data[5]
+        self.profit_10 = tradeup_data[6]
+        self.roi_100 = tradeup_data[7]
+        self.profit_100 = tradeup_data[8]
+
+        self.skin_1 = skins[0]
+        self.skin_2 = skins[1]
 
     def calculate_chances(self):
         pass
