@@ -12,6 +12,17 @@ Steam Community Market price data to identify ideal trade ups with a net positiv
 
 """
 
+"""
+Things to check/do:
+Ensure all prices are being properly gathered (wear ratings)
+StatTracks
+Multi-step trade ups
+Float checker?
+Steam inventory scanner
+Discord bot integration
+Double check best fit skin algorithm
+"""
+
 import os
 import pathlib
 import db_handler

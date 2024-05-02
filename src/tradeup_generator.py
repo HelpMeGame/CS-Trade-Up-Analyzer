@@ -11,6 +11,8 @@ Generator algorithms for determining best possible trade ups for a given skin
 
 """
 
+import math
+import random
 import db_handler
 from src.models.weapon_classifiers import get_valid_wears
 
@@ -23,9 +25,11 @@ def generate_tradeups():
 
         print(f"\t > Generating combinations for rarity {i} ({len(skins)} items)...")
 
+        # loop through skins
         for skin in skins:
+            # loop through all valid wear ratings
             for wear in get_valid_wears(skin.min_wear, skin.max_wear, True):
-                # get the lowest value for this crate
+                # get the lowest trade up value for this crate (one rarity below)
                 data = db_handler.get_cheapest_by_crate_rarity_and_wear(skin.crate_id, i - 1,
                                                                         wear.value)
 
@@ -34,16 +38,19 @@ def generate_tradeups():
                 else:
                     lowest_skin_id, lowest_value = data
 
+                # get this skin's value
                 skin_value = db_handler.get_prices(skin.internal_id, wear.value)
 
+                # check to make sure skin has valid value
                 if skin_value is not None:
                     skin_value = skin_value[0][0] * 0.95  # account for market tax
                 else:
                     continue
 
+                # set min count to 1
                 best_count = 1
 
-                # find highest possible combination that could make money
+                # find highest possible combination that could make money (increases chances)
                 while best_count <= 10 and best_count * skin_value < skin_value:
                     best_count += 1
 
@@ -66,14 +73,33 @@ def generate_tradeups():
                 remaining = skin_value - (best_count * lowest_value)
 
                 # get the best filler skin
-                filler_skin = find_best_fit(remaining, 10 - best_count, wear.value, i - 1)
+                filler_skin, filler_case, filler_skin_cost = find_best_fit(remaining, 10 - best_count, wear.value,
+                                                                           i - 1)
 
                 # no filler skin available, skip
                 if filler_skin is None:
                     continue
 
+                # get case information
+                case = db_handler.get_crate_from_internal(skin.crate_id)
+
+                case_1_items, case_1_prices = db_handler.get_skin_prices_by_crate_rarity_and_wear(case.internal_id, i,
+                                                                                                  wear.value)
+                case_2_items, case_2_prices = db_handler.get_skin_prices_by_crate_rarity_and_wear(filler_case, i,
+                                                                                                  wear.value)
+
+                # calculate success chance
+                total_tickets = (len(case_1_items) * best_count) + (len(case_2_items) * (10 - best_count))
+
+                chance = best_count / total_tickets
+
+                input_cost = lowest_value + filler_skin_cost
+
+                roi_10, roi_100, profit_10, profit_100 = simulate(input_cost, case_1_prices, case_2_prices,
+                                                                  total_tickets, best_count)
+
                 # add tradeup to DB
-                db_handler.add_tradeup([skin.internal_id, filler_skin])
+                db_handler.add_tradeup([skin.internal_id, filler_skin], chance, roi_10, profit_10, roi_100, profit_100)
 
     # commit trade ups to the DB
     db_handler.WORKING_DB.commit()
@@ -88,6 +114,7 @@ def find_best_fit(remaining_value, remaining_count, wear, rarity) -> int:
     best_skin = None
     best_price = None
     best_count = None
+    best_case = None
     best_profit = 0
 
     # loop through all cases
@@ -111,6 +138,7 @@ def find_best_fit(remaining_value, remaining_count, wear, rarity) -> int:
             best_price = cheapest_price
             best_count = current_count
             best_profit = remaining_value - (best_price * remaining_count)
+            best_case = case.internal_id
             continue
 
         # calculate profit with current skin
@@ -135,9 +163,68 @@ def find_best_fit(remaining_value, remaining_count, wear, rarity) -> int:
             best_price = cheapest_price
             best_count = current_count
             best_profit = remaining_value - (best_price * remaining_count)
+            best_case = case.internal_id
 
     # return the best filler skin
     if (remaining_count * best_price) >= remaining_value:
-        return None
+        return None, None, None
     else:
-        return best_skin
+        return best_skin, best_case, best_price
+
+
+def simulate(input_costs: float, case_1_prices: list[float], case_2_prices: list[float],
+             total_tickets: int,
+             best_count: int):
+    # set default ROI lists to empty
+    roi_10 = []
+    roi_100 = []
+
+    # set default profits to 0
+    profit_10 = 0
+    profit_100 = 0
+
+    # copy all values into a new array
+    all_prices = case_1_prices.copy()
+    all_prices.extend(case_2_prices)
+
+    chance_range = [best_count]
+
+    # add chance for case 1 items
+    for i in range(len(case_1_prices) - 1):
+        chance_range.append(chance_range[-1] + best_count)
+
+    # add chance for case 2 items
+    for i in range(len(case_2_prices)):
+        chance_range.append(chance_range[-1] + (10 - best_count))
+
+    # simulate 100 random trade ups
+    for i in range(100):
+        # get random value
+        r = random.randint(1, total_tickets)
+
+        # get price from r
+        if r <= chance_range[0]:
+            price = all_prices[0]
+        else:
+            # loop through price ranges to find best match
+            for j in range(0, len(chance_range) - 1):
+                # check range
+                if chance_range[j] < r <= chance_range[j + 1]:
+                    price = all_prices[j]
+                    break
+            else:
+                price = all_prices[-1]
+
+        # get roi for this simulation
+        roi = price / input_costs
+        profit = -input_costs + price
+
+        # add to roi lists
+        roi_100.append(roi)
+        profit_100 += profit
+        if i < 10:
+            roi_10.append(roi)
+            profit_10 += profit
+
+    # return average ROI values and profits
+    return sum(roi_10) / len(roi_10), sum(roi_100) / len(roi_100), profit_10, profit_100

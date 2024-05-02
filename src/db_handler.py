@@ -66,7 +66,11 @@ def connect_to_db(path: str, wipe_db=False):
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tradeups (
         internal_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        roi FLOAT
+        chance FLOAT,
+        roi_10 FLOAT,
+        profit_10 FLOAT,
+        roi_100 FLOAT,
+        profit_100 FLOAT
     );
     """)
 
@@ -237,6 +241,27 @@ def get_skins_by_crate(internal_id: int):
     return skins
 
 
+def get_skin_prices_by_crate_rarity_and_wear(crate_id:int, rarity:int, wear:int):
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute("SELECT internal_id FROM skins WHERE crate_id = ? AND rarity = ?", (crate_id, rarity)).fetchall()
+
+    skins = []
+    prices = []
+
+    for skin in data:
+        price = get_prices(skin[0], wear)
+
+        skins.append(skin[0])
+
+        if price is not None:
+            prices.append(price[0][0])
+        else:
+            prices.append(0)
+
+    return skins, prices
+
+
 def get_prices(skin_id: int, wear: int):
     cursor = WORKING_DB.cursor()
 
@@ -256,10 +281,10 @@ def get_prices(skin_id: int, wear: int):
     return data
 
 
-def add_tradeup(skin_ids, commit=False):
+def add_tradeup(skin_ids: list[int], chance: float, roi_10: float, roi_100: float, profit_10:float , profit_100: float, commit: bool=False):
     cursor = WORKING_DB.cursor()
 
-    cursor.execute("INSERT INTO tradeups (roi) VALUES (?)", (0,))
+    cursor.execute("INSERT INTO tradeups (chance, roi_10, roi_100, profit_10, profit_100) VALUES (?, ?, ?, ?, ?)", (chance, roi_10, roi_100, profit_10, profit_100))
     tradeup_id = cursor.execute("SELECT internal_id FROM tradeups WHERE ROWID = ?", (cursor.lastrowid,)).fetchone()[0]
 
     for skin in skin_ids:
