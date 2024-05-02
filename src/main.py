@@ -10,9 +10,6 @@ Copyright 2024
 Main file for analyzer start up. Attempts to use all combinations of Counter Strike weapon skins and
 Steam Community Market price data to identify ideal trade ups with a net positive result.
 
-"""
-
-"""
 Things to check/do:
 Ensure all prices are being properly gathered (wear ratings)
 StatTracks
@@ -21,7 +18,7 @@ Float checker?
 Steam inventory scanner
 Discord bot integration
 Double check best fit skin algorithm
-Ensure rarities are getting properly gathered
+
 """
 
 import os
@@ -31,7 +28,6 @@ import market_handler
 import tradeup_generator
 import resource_collector
 from models.weapon_classifiers import wear_int_to_enum, wear_int_enum_to_str_enum, WeaponIntToStr
-
 
 WORKING_PATH = pathlib.Path(os.curdir)
 
@@ -98,24 +94,26 @@ def main():
 
         print(f"\n\n\n"
               f"== Trade Up {tradeup.internal_id} ==\n"
-              f"Target: {tradeup.goal_skin.skin_name} ({wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]})\n"
+              f"Target: {WeaponIntToStr[tradeup.goal_skin.weapon_type]} {tradeup.goal_skin.skin_name} ({wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]})\n"
+              f"Success Chance: {round(tradeup.chance * 100, 2)}%\n"
               f"\n"
               f"Simulation Results:\n"
               f"\n"
               f"10:\n"
-              f"\t> ROI: {tradeup.roi_10 * 100}%\n"
-              f"\t> Profit: ${tradeup.profit_10}\n"
+              f"\t> ROI: {round(tradeup.roi_10 * 100, 2)}%\n"
+              f"\t> Profit: ${round(tradeup.profit_10, 2)}\n"
               f"100:\n"
-              f"\t> ROI: {tradeup.roi_100 * 100}%\n"
-              f"\t> Profit: ${tradeup.profit_100}\n"
+              f"\t> ROI: {round(tradeup.roi_100 * 100, 2)}%\n"
+              f"\t> Profit: ${round(tradeup.profit_100, 2)}\n"
               f"\n"
               f"Inputs:\n"
               f"\n"
               f"\t> {tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_1.weapon_type]} \"{tradeup.skin_1.skin_name}\"\n")
 
         if tradeup.skin_2 is not None:
-            print(f"\t> {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\"\n"
-                  f"\n")
+            print(
+                f"\t> {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\"\n"
+                f"\n")
 
 
 if __name__ == "__main__":
