@@ -157,6 +157,17 @@ str_to_rarity = {
     "immortal": RarityToInt.Immortal     # Exceedingly Rare
 }
 
+game_rarity_to_rarity = {
+    "consumer": RarityToInt.Common,            # Consumer
+    "industrial": RarityToInt.Uncommon,        # Industrial
+    "mil-spec": RarityToInt.Rare,              # Mil-Spec
+    "restricted": RarityToInt.Mythical,        # Restricted
+    "classified": RarityToInt.Legendary,       # Classified
+    "covert": RarityToInt.Ancient,             # Covert
+    "exceedingly rare": RarityToInt.Immortal   # Exceedingly Rare
+}
+
+
 
 str_to_weapon = {
     "tec9": WeaponToInt.TEC9,

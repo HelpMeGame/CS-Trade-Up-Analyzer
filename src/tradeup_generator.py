@@ -99,8 +99,8 @@ def generate_tradeups():
                                                                   total_tickets, best_count)
 
                 # add tradeup to DB
-                db_handler.add_tradeup(skin_ids, skin.internal_id, wear.value, best_count, chance, roi_10, profit_10,
-                                       roi_100, profit_100)
+                db_handler.add_tradeup(skin_ids, skin.internal_id, wear.value, i, skin.weapon_type, best_count, chance, roi_10, profit_10,
+                                       roi_100, profit_100, lowest_value, filler_skin_cost)
 
     # commit trade ups to the DB
     db_handler.WORKING_DB.commit()

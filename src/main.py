@@ -22,6 +22,7 @@ Double check best fit skin algorithm
 """
 
 import os
+import bot
 import pathlib
 import db_handler
 import market_handler
@@ -42,10 +43,11 @@ def main():
     if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.creds")):
         with open(os.path.join(WORKING_PATH.absolute(), "data/.creds"), "r") as f:
             steam_creds = tuple(f.readlines())
+            f.close()
     else:
         steam_creds = ("", "")
 
-    should_wipe = True
+    should_wipe = False
 
     # establish connection to database
     db_handler.connect_to_db(os.path.join(WORKING_PATH.absolute(), "data/skins.db"), wipe_db=should_wipe)
@@ -76,6 +78,14 @@ def main():
 
         print("\n\n")
 
+    if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.bot-creds")):
+        print("Starting bot...")
+        with open(os.path.join(WORKING_PATH.absolute(), "data/.bot-creds"), "r") as f:
+            token = f.read()
+            f.close()
+
+        bot.start_bot(token.strip())
+
     while True:
         tradeup_id = input("Please enter the trade up ID to receive information on (-1 to exit): ")
 
@@ -92,10 +102,21 @@ def main():
             print("Trade up not found")
             continue
 
+        input_price = (tradeup.skin_1_price * tradeup.skin_1_count) + (
+                tradeup.skin_2_price * (10 - tradeup.skin_1_count))
+
+        goal_skin_price = db_handler.get_prices(tradeup.goal_skin.internal_id, tradeup.goal_wear)
+
+        if goal_skin_price is not None:
+            possible_profit = f"${round(goal_skin_price[0][0] - input_price, 2):.2f}"
+        else:
+            possible_profit = "No price on market"
+
         print(f"\n\n\n"
               f"== Trade Up {tradeup.internal_id} ==\n"
               f"Target: {WeaponIntToStr[tradeup.goal_skin.weapon_type]} {tradeup.goal_skin.skin_name} ({wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]})\n"
               f"Success Chance: {round(tradeup.chance * 100, 2)}%\n"
+              f"Possible Profit: {possible_profit}\n"
               f"\n"
               f"Simulation Results:\n"
               f"\n"
@@ -106,13 +127,13 @@ def main():
               f"\t> ROI: {round(tradeup.roi_100 * 100, 2)}%\n"
               f"\t> Profit: ${round(tradeup.profit_100, 2)}\n"
               f"\n"
-              f"Inputs:\n"
+              f"Inputs (${round(input_price, 2)} total):\n"
               f"\n"
-              f"\t> {tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_1.weapon_type]} \"{tradeup.skin_1.skin_name}\"\n")
+              f"\t> {tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_1.weapon_type]} \"{tradeup.skin_1.skin_name}\" (${round(tradeup.skin_1_price, 2)} per skin)\n")
 
         if tradeup.skin_2 is not None:
             print(
-                f"\t> {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\"\n"
+                f"\t> {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\" (${round(tradeup.skin_2_price, 2)} per skin)\n"
                 f"\n")
 
 

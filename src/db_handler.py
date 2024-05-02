@@ -69,12 +69,16 @@ def connect_to_db(path: str, wipe_db=False):
         internal_id INTEGER PRIMARY KEY AUTOINCREMENT,
         goal_skin INTEGER,
         goal_wear INTEGER,
+        goal_rarity INTEGER,
+        goal_weapon INTEGER,
         skin_1_count INTEGER,
         chance FLOAT,
         roi_10 FLOAT,
         profit_10 FLOAT,
         roi_100 FLOAT,
         profit_100 FLOAT,
+        skin_1_price FLOAT,
+        skin_2_price FLOAT,
         FOREIGN KEY (goal_skin) REFERENCES skins(internal_id)
     );
     """)
@@ -233,6 +237,37 @@ def get_skins_by_rarity(rarity: int):
     return skins
 
 
+def get_skin_by_name(name: str):
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute("SELECT * FROM skins WHERE skin_name = ?", (name,)).fetchone()
+
+    cursor.close()
+
+    if data is None:
+        return None
+
+    return Skin(data)
+
+
+def get_skins_by_search_name(search_name: str, weapon_type: int = None) -> list[str]:
+    cursor = WORKING_DB.cursor()
+
+    if weapon_type is not None:
+        data = cursor.execute("SELECT skin_name FROM skins WHERE weapon_type = ?", (weapon_type,)).fetchall()
+    else:
+        data = cursor.execute("SELECT skin_name FROM skins").fetchall()
+
+    cursor.close()
+
+    skins = []
+    for skin in data:
+        if skin[0].lower().startswith(search_name):
+            skins.append(skin[0])
+
+    return skins
+
+
 def get_skins_by_crate(internal_id: int):
     cursor = WORKING_DB.cursor()
 
@@ -281,6 +316,7 @@ def get_skin_by_id(internal_id: int):
 
     return Skin(data)
 
+
 def get_prices(skin_id: int, wear: int):
     cursor = WORKING_DB.cursor()
 
@@ -300,13 +336,18 @@ def get_prices(skin_id: int, wear: int):
     return data
 
 
-def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, skin_1_count, chance: float, roi_10: float, roi_100: float, profit_10: float,
-                profit_100: float, commit: bool = False):
+def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, goal_rarity: int, goal_weapon: int, skin_1_count,
+                chance: float, roi_10: float,
+                roi_100: float, profit_10: float,
+                profit_100: float, skin_1_price: float, skin_2_price: float, commit: bool = False):
     cursor = WORKING_DB.cursor()
 
     cursor.execute(
-        "INSERT INTO tradeups (goal_skin, goal_wear, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (goal_skin, goal_wear, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100))
+        "INSERT INTO tradeups (goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100, skin_1_price, skin_2_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10,
+            profit_100, skin_1_price, skin_2_price))
+
     tradeup_id = cursor.execute("SELECT internal_id FROM tradeups WHERE ROWID = ?", (cursor.lastrowid,)).fetchone()[0]
 
     for skin in skin_ids:
@@ -395,3 +436,44 @@ def get_tradeup_by_id(tradeup_id):
             return None
 
     return TradeUp(data, skins)
+
+
+def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str):
+    criteria = []
+    values = []
+
+    if rarity is not None:
+        criteria.append("goal_rarity = ?")
+        values.append(rarity)
+
+    if wear is not None:
+        criteria.append("goal_wear = ?")
+        values.append(wear)
+
+    if weapon is not None:
+        criteria.append("goal_weapon = ?")
+        values.append(weapon)
+
+    if skin_name is not None:
+        skin_id = get_skin_by_name(skin_name).internal_id
+        criteria.append("goal_skin = ?")
+        values.append(skin_id)
+
+    if len(criteria) == 0:
+        return None
+
+    criteria_str = " AND ".join(criteria)
+    values = tuple(values)
+
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str}", values).fetchall()
+
+    cursor.close()
+
+    tradeups = []
+
+    for tradeup in data:
+        tradeups.append(get_tradeup_by_id(tradeup[0]))
+
+    return tradeups
