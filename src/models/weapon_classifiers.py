@@ -96,13 +96,13 @@ WeaponIntToStr = {
 
 
 class RarityToInt(enum.Enum):
-    Common = 0      # Consumer
-    Uncommon = 1    # Industrial
-    Rare = 2        # Mil-Spec
-    Mythical = 3    # Restricted
-    Legendary = 4   # Classified
-    Ancient = 5     # Covert
-    Immortal = 6    # Exceedingly Rare
+    Common = 0  # Consumer
+    Uncommon = 1  # Industrial
+    Rare = 2  # Mil-Spec
+    Mythical = 3  # Restricted
+    Legendary = 4  # Classified
+    Ancient = 5  # Covert
+    Immortal = 6  # Exceedingly Rare
 
 
 class WearsToStr(enum.StrEnum):
@@ -129,7 +129,6 @@ str_to_wear = {
     "Battle-Scarred": WearsToInt.BATTLESCARRED
 }
 
-
 wear_int_enum_to_str_enum = {
     WearsToInt.FACTORYNEW: WearsToStr.FACTORYNEW,
     WearsToInt.MINWEAR: WearsToStr.MINWEAR,
@@ -146,27 +145,35 @@ wear_int_to_enum = {
     4: WearsToInt.BATTLESCARRED
 }
 
-
 str_to_rarity = {
-    "common": RarityToInt.Common,        # Consumer
-    "uncommon": RarityToInt.Uncommon,    # Industrial
-    "rare": RarityToInt.Rare,            # Mil-Spec
-    "mythical": RarityToInt.Mythical,    # Restricted
+    "common": RarityToInt.Common,  # Consumer
+    "uncommon": RarityToInt.Uncommon,  # Industrial
+    "rare": RarityToInt.Rare,  # Mil-Spec
+    "mythical": RarityToInt.Mythical,  # Restricted
     "legendary": RarityToInt.Legendary,  # Classified
-    "ancient": RarityToInt.Ancient,      # Covert
-    "immortal": RarityToInt.Immortal     # Exceedingly Rare
+    "ancient": RarityToInt.Ancient,  # Covert
+    "immortal": RarityToInt.Immortal  # Exceedingly Rare
 }
 
 game_rarity_to_rarity = {
-    "consumer": RarityToInt.Common,            # Consumer
-    "industrial": RarityToInt.Uncommon,        # Industrial
-    "mil-spec": RarityToInt.Rare,              # Mil-Spec
-    "restricted": RarityToInt.Mythical,        # Restricted
-    "classified": RarityToInt.Legendary,       # Classified
-    "covert": RarityToInt.Ancient,             # Covert
-    "exceedingly rare": RarityToInt.Immortal   # Exceedingly Rare
+    "consumer": RarityToInt.Common,  # Consumer
+    "industrial": RarityToInt.Uncommon,  # Industrial
+    "mil-spec": RarityToInt.Rare,  # Mil-Spec
+    "restricted": RarityToInt.Mythical,  # Restricted
+    "classified": RarityToInt.Legendary,  # Classified
+    "covert": RarityToInt.Ancient,  # Covert
+    "exceedingly rare": RarityToInt.Immortal  # Exceedingly Rare
 }
 
+rarity_int_to_game_rarity = {
+    0: "Consumer",         # Consumer
+    1: "Industrial",       # Industrial
+    2: "Mil-Spec",         # Mil-Spec
+    3: "Restricted",       # Restricted
+    4: "Classified",       # Classified
+    5: "Covert",           # Covert
+    6: "Exceedingly Rare"  # Exceedingly Rare
+}
 
 
 str_to_weapon = {

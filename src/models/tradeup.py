@@ -31,6 +31,8 @@ class TradeUp:
         else:
             self.skin_2_price = 0
 
+        self.input_price = tradeup_data[13]
+
         self.skin_1 = skins[0]
 
         if len(skins) > 1:

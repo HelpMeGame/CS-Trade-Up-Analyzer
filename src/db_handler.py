@@ -79,6 +79,7 @@ def connect_to_db(path: str, wipe_db=False):
         profit_100 FLOAT,
         skin_1_price FLOAT,
         skin_2_price FLOAT,
+        input_price FLOAT,
         FOREIGN KEY (goal_skin) REFERENCES skins(internal_id)
     );
     """)
@@ -339,14 +340,14 @@ def get_prices(skin_id: int, wear: int):
 def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, goal_rarity: int, goal_weapon: int, skin_1_count,
                 chance: float, roi_10: float,
                 roi_100: float, profit_10: float,
-                profit_100: float, skin_1_price: float, skin_2_price: float, commit: bool = False):
+                profit_100: float, skin_1_price: float, skin_2_price: float, input_price:float, commit: bool = False):
     cursor = WORKING_DB.cursor()
 
     cursor.execute(
-        "INSERT INTO tradeups (goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100, skin_1_price, skin_2_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO tradeups (goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100, skin_1_price, skin_2_price, input_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10,
-            profit_100, skin_1_price, skin_2_price))
+            profit_100, skin_1_price, skin_2_price, input_price))
 
     tradeup_id = cursor.execute("SELECT internal_id FROM tradeups WHERE ROWID = ?", (cursor.lastrowid,)).fetchone()[0]
 
@@ -467,7 +468,22 @@ def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str
 
     cursor = WORKING_DB.cursor()
 
-    data = cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str}", values).fetchall()
+    data = cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str} ORDER BY profit_100 DESC", values).fetchall()
+
+    cursor.close()
+
+    tradeups = []
+
+    for tradeup in data:
+        tradeups.append(get_tradeup_by_id(tradeup[0]))
+
+    return tradeups
+
+
+def get_tradeups_in_price_range(lower_bound:float, upper_bound: float):
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute("SELECT internal_id FROM tradeups WHERE input_price >= ? AND input_price <= ? ORDER BY profit_100 DESC", (lower_bound, upper_bound)).fetchall()
 
     cursor.close()
 

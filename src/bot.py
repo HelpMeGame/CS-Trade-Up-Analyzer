@@ -1,7 +1,19 @@
 import random
 import discord
 import db_handler
-from models.weapon_classifiers import wear_int_to_enum, wear_int_enum_to_str_enum, WeaponIntToStr, WeaponToInt, game_rarity_to_rarity, str_to_wear
+from discord import Colour
+from models.weapon_classifiers import wear_int_to_enum, wear_int_enum_to_str_enum, WeaponIntToStr, WeaponToInt, \
+    game_rarity_to_rarity, str_to_wear, rarity_int_to_game_rarity
+
+rarity_to_color = {
+    0: Colour.light_grey(),
+    1: Colour.blue(),
+    2: Colour.dark_blue(),
+    3: Colour.purple(),
+    4: Colour.nitro_pink(),
+    5: Colour.red(),
+    6: Colour.orange(),
+}
 
 intents = discord.Intents.default()
 
@@ -44,8 +56,8 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
                          skin_name: discord.Option(input_type=str,
                                                    autocomplete=discord.utils.basic_autocomplete(autocomplete_skins),
                                                    description="The resulting skin's name to sort by",
-                                                   required=False)):
-
+                                                   required=False),
+                         offset: discord.Option(int, required=False, default=20)):
     if rarity is not None:
         rarity = game_rarity_to_rarity[rarity.lower()].value
 
@@ -62,7 +74,7 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
     if skin_name is not None:
         skin_name = db_handler.get_skins_by_search_name(skin_name.lower())[0]
 
-    tradeups = db_handler.get_tradeups_by_criteria(rarity, wear, weapon, skin_name)[:20]
+    tradeups = db_handler.get_tradeups_by_criteria(rarity, wear, weapon, skin_name)
 
     if tradeups is None:
         await ctx.send_response("Please add a filter.")
@@ -71,25 +83,54 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
         await ctx.send_response("No trade ups matching that criteria were found.")
         return
 
+    await ctx.send_response(await format_tradeups(tradeups[offset - 20:offset]))
+
+
+@bot.slash_command(description="Sorts trade ups by the input price with a lower and upper bound")
+async def get_trade_up_by_input_price(ctx: discord.ApplicationContext,
+                                      lower_bound: discord.Option(float, required=False),
+                                      upper_bound: discord.Option(float, required=False),
+                                      offset: discord.Option(int, required=False, default=20)):
+    if lower_bound is None:
+        lower_bound = 0
+
+    if upper_bound is None:
+        upper_bound = 9999999999
+
+    tradeups = db_handler.get_tradeups_in_price_range(lower_bound, upper_bound)
+
+    if tradeups is None:
+        await ctx.send_response("No valid trade ups found.")
+        return
+    elif len(tradeups) == 0:
+        await ctx.send_response("No trade ups matching that criteria were found.")
+        return
+
+    await ctx.send_response(await format_tradeups(tradeups[offset - 20:offset]))
+
+
+async def format_tradeups(tradeups):
     desc = []
 
     for tradeup in tradeups:
         goal_skin_price = db_handler.get_prices(tradeup.goal_skin.internal_id, tradeup.goal_wear)
 
-        input_price = (tradeup.skin_1_price * tradeup.skin_1_count) + (tradeup.skin_2_price * (10 - tradeup.skin_1_count))
+        input_price = (tradeup.skin_1_price * tradeup.skin_1_count) + (
+                tradeup.skin_2_price * (10 - tradeup.skin_1_count))
 
         if goal_skin_price is not None:
             possible_profit = f"`${round(goal_skin_price[0][0] - input_price, 2):,.2f}`"
         else:
             possible_profit = "`N/A`"
 
-        desc.append(f"Trade Up `{tradeup.internal_id}`: {tradeup.goal_skin.skin_name}, cost: `${round(input_price, 2):,.2f}`, potential profit: {possible_profit}, roi 10: `{round(tradeup.roi_10):,.2f}`")
+        desc.append(
+            f"Trade Up `{tradeup.internal_id}`: {tradeup.goal_skin.skin_name}, cost: `${round(input_price, 2):,.2f}`, potential profit: {possible_profit}, roi 10: `{round(tradeup.roi_10, 2):,.2f}`")
 
-    await ctx.send_response("\n".join(desc))
+    return "\n".join(desc)
 
 
 @bot.slash_command(description="Get details about a trade up")
-async def get_trade_up(ctx: discord.ApplicationContext, tradeup_id: int):
+async def get_trade_up(ctx: discord.ApplicationContext, tradeup_id: discord.Option(int)):
     try:
         tradeup = db_handler.get_tradeup_by_id(tradeup_id)
     except ValueError:
@@ -110,8 +151,11 @@ async def get_trade_up(ctx: discord.ApplicationContext, tradeup_id: int):
     embed = discord.Embed(
         title=f"{WeaponIntToStr[tradeup.goal_skin.weapon_type]} \"{tradeup.goal_skin.skin_name}\" ({wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]})",
         description=desc,
-        colour=discord.Colour.random()
+        colour=rarity_to_color[tradeup.goal_rarity]
     )
+
+    embed.set_author(
+        name=f"{rarity_int_to_game_rarity[tradeup.goal_rarity - 1]} to {rarity_int_to_game_rarity[tradeup.goal_rarity]}")
 
     embed.set_footer(text=f"Trade Up ID: {tradeup.internal_id}")
 
@@ -122,7 +166,7 @@ async def get_trade_up(ctx: discord.ApplicationContext, tradeup_id: int):
 
     embed.add_field(name=f"Inputs (${round(input_price, 2):,.2f} total)", value=inputs, inline=False)
 
-    sim_results = f"10:\n- ROI: `{round(tradeup.roi_10 * 100, 2):,.2f}%`\n- Profit: `${round(tradeup.profit_10, 2):,.2f}`\n100:\n- ROI: `{round(tradeup.roi_100 * 100, 2):,.2f}%`\n- Profit: `${round(tradeup.profit_100, 2):,.2f}`"
+    sim_results = f"\n10:\n- ROI: `{round(tradeup.roi_10 * 100, 2):,.2f}%`\n- Profit: `${round(tradeup.profit_10, 2):,.2f}`\n100:\n- ROI: `{round(tradeup.roi_100 * 100, 2):,.2f}%`\n- Profit: `${round(tradeup.profit_100, 2):,.2f}`"
 
     embed.add_field(name="Simulation Results", value=sim_results, inline=False)
 
@@ -200,7 +244,7 @@ async def simulate(ctx: discord.ApplicationContext, tradeup_id: int, simulation_
 
     roi_average = sum(roi) / len(roi)
 
-    desc = f"Number of Iterations: `{simulation_iterations}`\n\nROI: `{round(roi_average, 2):,.2f}%`\nProfit: `${round(profit, 2):,.2f}`"
+    desc = f"Trade Up ID: `{tradeup_id}`\n\nNumber of Iterations: `{simulation_iterations}`\n\nROI: `{round(roi_average, 2):,.2f}%`\nProfit: `${round(profit, 2):,.2f}`"
 
     embed = discord.Embed(
         title="Simulation Results",
