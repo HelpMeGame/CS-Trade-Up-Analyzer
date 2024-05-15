@@ -106,7 +106,7 @@ async def get_trade_up_by_input_price(ctx: discord.ApplicationContext,
         await ctx.send_response("No trade ups matching that criteria were found.")
         return
 
-    await ctx.send_response(await format_tradeups(tradeups[offset - 20:offset]))
+    await ctx.send_response(await format_tradeups(tradeupst[offset - 20:offset]))
 
 
 async def format_tradeups(tradeups):

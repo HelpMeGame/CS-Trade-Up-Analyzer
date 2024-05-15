@@ -7,7 +7,7 @@ src/models/crate.py
 Developed by Keagan Bowman
 Copyright 2024
 
-Crate class type for use with the database
+Crate class type for use with the database. Created through getting a crate in the database.
 
 """
 

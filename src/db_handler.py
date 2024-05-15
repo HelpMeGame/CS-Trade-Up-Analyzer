@@ -77,8 +77,11 @@ def connect_to_db(path: str, wipe_db=False):
         profit_10 FLOAT,
         roi_100 FLOAT,
         profit_100 FLOAT,
+        price_warning BOOLEAN,
         skin_1_price FLOAT,
         skin_2_price FLOAT,
+        skin_1_max_wear FLOAT,
+        skin_2_max_wear FLOAT,
         input_price FLOAT,
         FOREIGN KEY (goal_skin) REFERENCES skins(internal_id)
     );
@@ -283,6 +286,20 @@ def get_skins_by_crate(internal_id: int):
     return skins
 
 
+def get_skin_by_crate_and_rarity(crate_id: int, rarity: int):
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute("SELECT * FROM skins WHERE crate_id = ? AND rarity = ?", (crate_id, rarity,)).fetchall()
+
+    cursor.close()
+
+    skins = []
+    for skin in data:
+        skins.append(Skin(skin))
+
+    return skins
+
+
 def get_skin_prices_by_crate_rarity_and_wear(crate_id: int, rarity: int, wear: int):
     cursor = WORKING_DB.cursor()
 
@@ -340,14 +357,15 @@ def get_prices(skin_id: int, wear: int):
 def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, goal_rarity: int, goal_weapon: int, skin_1_count,
                 chance: float, roi_10: float,
                 roi_100: float, profit_10: float,
-                profit_100: float, skin_1_price: float, skin_2_price: float, input_price:float, commit: bool = False):
+                profit_100: float, price_warning: bool, skin_1_price: float, skin_2_price: float, skin_1_max_wear: float, skin_2_max_wear: float, input_price: float,
+                commit: bool = False):
     cursor = WORKING_DB.cursor()
 
     cursor.execute(
-        "INSERT INTO tradeups (goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100, skin_1_price, skin_2_price, input_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO tradeups (goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100, price_warning, skin_1_price, skin_2_price, skin_1_max_wear, skin_2_max_wear, input_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10,
-            profit_100, skin_1_price, skin_2_price, input_price))
+            profit_100, price_warning, skin_1_price, skin_2_price, skin_1_max_wear, skin_2_max_wear, input_price))
 
     tradeup_id = cursor.execute("SELECT internal_id FROM tradeups WHERE ROWID = ?", (cursor.lastrowid,)).fetchone()[0]
 
@@ -468,7 +486,8 @@ def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str
 
     cursor = WORKING_DB.cursor()
 
-    data = cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str} ORDER BY profit_100 DESC", values).fetchall()
+    data = cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str} ORDER BY profit_100 DESC",
+                          values).fetchall()
 
     cursor.close()
 
@@ -480,15 +499,21 @@ def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str
     return tradeups
 
 
-def get_tradeups_in_price_range(lower_bound:float, upper_bound: float):
+def get_tradeups_in_price_range(lower_bound: float, upper_bound: float):
+    # create cursor
     cursor = WORKING_DB.cursor()
 
-    data = cursor.execute("SELECT internal_id FROM tradeups WHERE input_price >= ? AND input_price <= ? ORDER BY profit_100 DESC", (lower_bound, upper_bound)).fetchall()
+    # select valid trade ups
+    data = cursor.execute(
+        "SELECT internal_id FROM tradeups WHERE input_price >= ? AND input_price <= ? ORDER BY profit_100 DESC",
+        (lower_bound, upper_bound)).fetchall()
 
+    # close cursor
     cursor.close()
 
     tradeups = []
 
+    # case to trade up objects
     for tradeup in data:
         tradeups.append(get_tradeup_by_id(tradeup[0]))
 

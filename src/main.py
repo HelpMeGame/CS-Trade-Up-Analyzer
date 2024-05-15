@@ -11,13 +11,13 @@ Main file for analyzer start up. Attempts to use all combinations of Counter Str
 Steam Community Market price data to identify ideal trade ups with a net positive result.
 
 Things to check/do:
-Ensure all prices are being properly gathered (wear ratings)
 StatTracks
 Multi-step trade ups
-Float checker?
+!!!! -> Float checker?
 Steam inventory scanner
 Discord bot integration
 Double check best fit skin algorithm
+Check all skins from crate, not just cheapest? Maybe sort by cheapest first.
 
 """
 

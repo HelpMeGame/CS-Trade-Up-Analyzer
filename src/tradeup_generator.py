@@ -14,7 +14,9 @@ Generator algorithms for determining best possible trade ups for a given skin
 import math
 import random
 import db_handler
+from src.models.skin import Skin
 from src.models.weapon_classifiers import get_valid_wears
+from src.models.simulation_possibility import SimulationPossibility
 
 
 def generate_tradeups():
@@ -25,90 +27,232 @@ def generate_tradeups():
 
         print(f"\t > Generating combinations for rarity {i} ({len(skins)} items)...")
 
+        # expected wear rating calculations:
+        # loop starts inside for wear in get_valid_wears(...):
+        #   > forces consideration for cheapest skin.
+        #   > see below for more info
+        # start at highest wear rating (cheaper) that can reasonably produce a valid skin.
+        #   > this loop should be started with the cheapest skin in a crate
+        #   > potentially change later to include all valid skins from the crate
+        # decrease considered wear rating by 0.01 at every loop
+        # write algorithm to determine max value of float for filler skins
+        # expected float = ((goal_max_float - goal_min_float) * average_float) + goal_min_float
+
         # loop through skins
-        for skin in skins:
-            # loop through all valid wear ratings
-            for wear in get_valid_wears(skin.min_wear, skin.max_wear, True):
-                # get the lowest trade up value for this crate (one rarity below)
-                data = db_handler.get_cheapest_by_crate_rarity_and_wear(skin.crate_id, i - 1,
-                                                                        wear.value)
+        for goal_skin in skins:
+            # loop through all valid wear ratings for current skin
+            for goal_wear in get_valid_wears(goal_skin.min_wear, goal_skin.max_wear, True):
+                # loop through all wer ratings, and determine the most profitable
+                max_profitable_wear = 1
+                # should the max_profitable_wear value be decremented?
+                decrement_wear = False
+                while max_profitable_wear > 0:
 
-                if data is None:
-                    continue
-                else:
-                    lowest_skin_id, lowest_value = data
-
-                skin_ids = [lowest_skin_id]
-
-                # get this skin's value
-                skin_value = db_handler.get_prices(skin.internal_id, wear.value)
-
-                # check to make sure skin has valid value
-                if skin_value is not None:
-                    skin_value = skin_value[0][0] * 0.95  # account for market tax
-                else:
-                    continue
-
-                # set min count to 10
-                best_count = 10
-
-                # find highest possible combination that could make money (increases chances)
-                while best_count > 0 and lowest_value * best_count > skin_value:
-                    best_count -= 1
-
-                # skip where best count can't be decreased
-                if best_count <= 0:
-                    continue
-
-                # double-check the remaining value
-                remaining = skin_value - (best_count * lowest_value)
-
-                if best_count != 10:
-                    # get the best filler skin
-                    filler_skin, filler_case, filler_skin_cost = find_best_fit(skin.crate_id, remaining, 10 - best_count, wear.value,
-                                                                               i - 1)
-
-                    # no filler skin available, skip
-                    if filler_skin is None:
-                        continue
+                    # ensure the max_profitable_wear isn't changed in the first run, but is in all subsequent runs
+                    if decrement_wear:
+                        max_profitable_wear -= 0.01
                     else:
+                        decrement_wear = True
+
+                    # get list of valid wears
+                    max_wear = get_valid_wears(0, max_profitable_wear, True)
+
+                    # determine absolute highest wear value so we can use it to search
+                    if len(max_wear) > 0:
+                        max_wear = max_wear[-1].value
+                    else:
+                        # no valid wear rating found, skip this check
+                        break
+
+                    # get the cheapest skin at this wear rating
+                    data = db_handler.get_cheapest_by_crate_rarity_and_wear(goal_skin.crate_id, goal_skin.rarity - 1,
+                                                                            max_wear)
+
+                    # data does not exist, we'll decrement and try again
+                    if data is None:
+                        continue
+
+                    # set cheapest skin id/price variables from data
+                    cheapest_id, cheapest_price = data
+
+                    # gather price data for the current goal skin
+                    goal_price = db_handler.get_prices(goal_skin.internal_id, goal_wear.value)
+
+                    # if price data doesn't exist for this goal, we can skip it
+                    if goal_price is None:
+                        continue
+
+                    # account for the market tax on the resale value of this item
+                    goal_price = goal_price[0][0] * 0.95
+
+                    # assume that 10 of the cheapest skins is the best fit (gives a higher success chance)
+                    skin_1_best = 10
+
+                    # calculate highest possible price of cheapest_price first
+                    # this will allow us to decrease later on to save money or lower wear ratings.
+                    while skin_1_best > 0 and cheapest_price * skin_1_best > goal_price:
+                        skin_1_best -= 1
+
+                    # we need to ensure that the filler skins later on can at least be 3 cents, so check that here
+                    if (skin_1_best * cheapest_price) + ((10 - skin_1_best) * 0.03) > goal_price:
+                        skin_1_best -= 1
+
+                    # check that skin_1_best is a valid combination
+                    if skin_1_best <= 0:
+                        continue
+
+                    # now consider the max wear value of the filler skins
+                    valid_wears = False
+
+                    # set the defaults for the goal variables
+                    goal_alternative = None
+                    goal_average = 0
+
+                    while skin_1_best > 0:
+                        max_alternative_wear = 1
+
+                        while max_alternative_wear > 0:
+
+                            # get a rough average wear rating prediction
+                            average = (
+                                              (
+                                                          max_profitable_wear * skin_1_best)  # generate average for cheapest skin with max_profitable
+                                              + ((10 - skin_1_best) * max_alternative_wear)  # generate average for filler skins with max_alternative
+                                      ) / 10
+
+                            # get wear rating estimate
+                            estimate = estimate_wear(goal_skin, average)
+
+                            # check if this wear rating is too high
+                            goal_alternative = get_valid_wears(0, estimate, True)[-1].value
+                            if goal_alternative > goal_wear.value:
+                                max_alternative_wear -= 0.01
+                                continue
+                            else:
+                                # valid wear rating combination, break from this loop
+                                valid_wears = True
+                                goal_average = average
+                                break
+
+                        # found valid wears, we'll break from this loop too.
+                        if valid_wears:
+                            break
+
+                        # if no valid wear was found, we'll decrement skin_1_best until one is
+                        skin_1_best -= 1
+
+                    # check to ensure skin_1_best is still valid
+                    if skin_1_best <= 0:
+                        continue
+
+                    # since we now have the max possible wear rating that works with this trade up, we can move on to the
+                    # next step: finding the best filler skin. we only need to do this if skin_1_best is < 10
+
+                    if skin_1_best < 10:
+                        # calculate the value remaining after our original skins
+                        remaining_value = goal_price - (cheapest_price * skin_1_best)
+
+                        # calculate how many more skins we can use
+                        remaining_count = 10 - skin_1_best
+
+                        # call the filler skin algorithm to get our data
+                        filler_skin_data = find_best_fit(goal_skin.crate_id, remaining_value, remaining_count,
+                                                         goal_alternative, goal_skin.rarity - 1)
+
+                        # no valid skin found! skip this combinations.
+                        if filler_skin_data[0] is None:
+                            continue
+
+                        # set our filler skin id, crate, and price
+                        filler_skin, filler_crate, filler_price = filler_skin_data
+                    else:
+                        # mark filler skin as empty so we can check it later
+                        filler_skin = None
+                        filler_price = 0
+
+                    # the next step after filler skins is to run a basic simulation using the data we've collected.
+                    # first though, we need the valid skins from the two crates.
+
+                    # gather up all possible results from the goal skin's case
+                    case_1_skins = db_handler.get_skin_by_crate_and_rarity(goal_skin.crate_id, goal_skin.rarity)
+
+                    # loop through case_1_skins and turn them into case_1_possibility objects
+                    case_1_possibilities = [SimulationPossibility(skin) for skin in case_1_skins]
+
+                    # check if we are using a filler skin, and fill out case_2_possibilities
+                    case_2_possibilities = []
+                    if filler_skin is not None:
+                        # gather case 2 skins
+                        case_2_skins = db_handler.get_skin_by_crate_and_rarity(filler_crate, goal_skin.rarity)
+
+                        # turn skins into possibility objects
+                        case_2_possibilities = [SimulationPossibility(skin) for skin in case_2_skins]
+
+                    # set input costs (how much each trade up will cost)
+                    input_costs = cheapest_price * skin_1_best
+
+                    # if we're using a filler skin, add that to the input cost
+                    if filler_skin is not None:
+                        input_costs += filler_price * (10 - skin_1_best)
+
+                    # generate the total number of "tickets" for this trade up
+                    total_tickets = (len(case_1_possibilities) * skin_1_best) + (len(case_2_possibilities) * (10 - skin_1_best))
+
+                    # run simulation
+                    sim_data = simulate(
+                        input_costs,
+                        case_1_possibilities,
+                        case_2_possibilities,
+                        total_tickets,
+                        skin_1_best,
+                        goal_average
+                    )
+
+                    # extract data from the simulation for 10 and 100 simulations, as well as the price warning flag
+                    roi_10, roi_100, profit_10, profit_100, price_warning = sim_data
+
+                    # finally, add all this data into the DB
+
+                    # get a list of the skin IDs used in this trade up
+                    skin_ids = [cheapest_id]
+
+                    # add the filler skin if it was used
+                    if filler_skin is not None:
                         skin_ids.append(filler_skin)
 
-                    input_cost = (lowest_value * best_count) + ((10 - best_count) * filler_skin_cost)
+                    # calculate the chance of getting the goal skin (for use in trade up displays)
+                    chance = skin_1_best / total_tickets
 
-                    case_2_items, case_2_prices = db_handler.get_skin_prices_by_crate_rarity_and_wear(filler_case, i,
-                                                                                                      wear.value)
-                else:
-                    # in the instance where we can make money with 10 of the same skin
-                    case_2_items = []
-                    case_2_prices = []
-                    input_cost = lowest_value * 10
-
-                # get case information
-                case = db_handler.get_crate_from_internal(db_handler.get_skin_by_id(lowest_skin_id).crate_id)
-
-                case_1_items, case_1_prices = db_handler.get_skin_prices_by_crate_rarity_and_wear(case.internal_id, i,
-                                                                                                  wear.value)
-
-                # calculate success chance
-                total_tickets = (len(case_1_items) * best_count) + (len(case_2_items) * (10 - best_count))
-
-                chance = best_count / total_tickets
-
-                roi_10, roi_100, profit_10, profit_100 = simulate(input_cost, case_1_prices, case_2_prices,
-                                                                  total_tickets, best_count)
-
-                # add tradeup to DB
-                db_handler.add_tradeup(skin_ids, skin.internal_id, wear.value, i, skin.weapon_type, best_count, chance, roi_10, profit_10,
-                                       roi_100, profit_100, lowest_value, filler_skin_cost, input_cost)
+                    # actually add to DB
+                    db_handler.add_tradeup(
+                        skin_ids,
+                        goal_skin.internal_id,
+                        goal_wear.value,
+                        goal_skin.rarity,
+                        goal_skin.weapon_type,
+                        skin_1_best,
+                        chance,
+                        roi_10,
+                        roi_100,
+                        profit_10,
+                        profit_100,
+                        price_warning,
+                        cheapest_price,
+                        filler_price,
+                        max_profitable_wear,
+                        max_alternative_wear,
+                        input_costs,
+                        True
+                    )
 
     # commit trade ups to the DB
-    db_handler.WORKING_DB.commit()
+    # db_handler.WORKING_DB.commit()
 
 
-def find_best_fit(origin_case_id, remaining_value, remaining_count, wear, rarity) -> int:
+def find_best_fit(origin_case_id: int, remaining_value: float, remaining_count: float, wear: int, rarity: int) -> tuple:
     # gather all cases, sort by rarity count for this rarity
     cases = db_handler.get_all_crates()
+    # sorting by rarity count starts us with less skins in this rarity
     cases.sort(key=lambda x: x.rarity_counts[rarity])
 
     # set the best values to empty
@@ -120,12 +264,14 @@ def find_best_fit(origin_case_id, remaining_value, remaining_count, wear, rarity
 
     # loop through all cases
     for case in cases:
+        # skip the origin case, that would be redundant
         if case.internal_id == origin_case_id:
             continue
 
         # set current count to the rarity count for this case
         current_count = case.rarity_counts[rarity]
 
+        # check to see if this case has valid trade ups into our specified rarity
         try:
             if case.rarity_counts[rarity + 1] == 0:
                 continue
@@ -135,17 +281,17 @@ def find_best_fit(origin_case_id, remaining_value, remaining_count, wear, rarity
         # find the cheapest skin from this case in this rarity/wear
         cheapest = db_handler.get_cheapest_by_crate_rarity_and_wear(case.internal_id, rarity, wear)
 
-        # no cheapest, skip this one
+        # if the case has no valid cheapest skin, skip it
         if cheapest is None:
             continue
 
-        # set some variables
+        # otherwise set the proper values
         cheapest_id, cheapest_price = cheapest
 
         # calculate profit with current skin
         current_profit = remaining_value - (cheapest_price * remaining_count)
 
-        # assign default best variables
+        # assign default best variables (for first run only)
         if best_skin is None and current_profit > 0:
             best_skin = cheapest_id
             best_price = cheapest_price
@@ -182,9 +328,12 @@ def find_best_fit(origin_case_id, remaining_value, remaining_count, wear, rarity
         return best_skin, best_case, best_price
 
 
-def simulate(input_costs: float, case_1_prices: list[float], case_2_prices: list[float],
+def simulate(input_costs: float,
+             case_1_possibilities: list[SimulationPossibility],
+             case_2_possibilities: list[SimulationPossibility],
              total_tickets: int,
-             best_count: int):
+             best_count: int,
+             average_wear: float):
     # set default ROI lists to empty
     roi_10 = []
     roi_100 = []
@@ -193,18 +342,23 @@ def simulate(input_costs: float, case_1_prices: list[float], case_2_prices: list
     profit_10 = 0
     profit_100 = 0
 
-    # copy all values into a new array
-    all_prices = case_1_prices.copy()
-    all_prices.extend(case_2_prices)
+    # set the price warning flag to False
+    # this will be True when an item with an unknown price was created
+    price_warning = False
 
+    # create a "chance range", which works with a random number generator to choose a reward
     chance_range = [best_count]
 
-    # add chance for case 1 items
-    for i in range(len(case_1_prices) - 1):
+    # combine all possibilities into a single list
+    all_skins = case_1_possibilities.copy()
+    all_skins.extend(case_2_possibilities)
+
+    # add chances for case 1 skins
+    for i in range(len(case_1_possibilities) - 1):
         chance_range.append(chance_range[-1] + best_count)
 
-    # add chance for case 2 items
-    for i in range(len(case_2_prices)):
+    # add chances for case 2 skins
+    for i in range(len(case_2_possibilities)):
         chance_range.append(chance_range[-1] + (10 - best_count))
 
     # simulate 100 random trade ups
@@ -212,18 +366,40 @@ def simulate(input_costs: float, case_1_prices: list[float], case_2_prices: list
         # get random value
         r = random.randint(1, total_tickets)
 
-        # get price from r
+        # use r to find the selected possibility
         if r <= chance_range[0]:
-            price = all_prices[0]
+            possibility = all_skins[0]
         else:
             # loop through price ranges to find best match
             for j in range(0, len(chance_range) - 1):
                 # check range
                 if chance_range[j] < r <= chance_range[j + 1]:
-                    price = all_prices[j]
+                    possibility = all_skins[j]
                     break
             else:
-                price = all_prices[-1]
+                possibility = all_skins[-1]
+
+        # get the skin's predicted wear
+        estimated_wear = estimate_wear(possibility, average_wear)
+
+        # get the estimated wear as a valid value
+        estimated_wear_value = get_valid_wears(0, estimated_wear, True)[-1].value
+
+        # attempt to get price of the generated skin
+        try:
+            price = db_handler.get_prices(possibility.skin_id, estimated_wear_value)[0][0]
+        except TypeError:
+            # if we can't get the price, grab the cheapest one at it's rarity and crate
+            possible_data = db_handler.get_cheapest_by_crate_rarity_and_wear(possibility.case_id, possibility.rarity, estimated_wear_value)
+
+            # if that doesn't exist, set it to a price of 0
+            if possible_data is None or len(possible_data) < 2:
+                price = 0
+            else:
+                price = possible_data[1]
+
+            # mark the price warning True since the results may be inaccurate.
+            price_warning = True
 
         # get roi for this simulation
         roi = price / input_costs
@@ -232,9 +408,15 @@ def simulate(input_costs: float, case_1_prices: list[float], case_2_prices: list
         # add to roi lists
         roi_100.append(roi)
         profit_100 += profit
+
+        # add to roi 10 as well if this was one of the round 10 simulations
         if i < 10:
             roi_10.append(roi)
             profit_10 += profit
 
     # return average ROI values and profits
-    return sum(roi_10) / len(roi_10), sum(roi_100) / len(roi_100), profit_10, profit_100
+    return sum(roi_10) / len(roi_10), sum(roi_100) / len(roi_100), profit_10, profit_100, price_warning
+
+
+def estimate_wear(skin: Skin | SimulationPossibility, average_wear: float):
+    return ((skin.max_wear - skin.min_wear) * average_wear) + skin.min_wear
