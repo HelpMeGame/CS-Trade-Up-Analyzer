@@ -286,7 +286,7 @@ def get_skins_by_crate(internal_id: int):
     return skins
 
 
-def get_skin_by_crate_and_rarity(crate_id: int, rarity: int):
+def get_skins_by_crate_and_rarity(crate_id: int, rarity: int):
     cursor = WORKING_DB.cursor()
 
     data = cursor.execute("SELECT * FROM skins WHERE crate_id = ? AND rarity = ?", (crate_id, rarity,)).fetchall()

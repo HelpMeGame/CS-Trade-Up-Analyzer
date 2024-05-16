@@ -13,12 +13,10 @@ Steam Community Market price data to identify ideal trade ups with a net positiv
 Things to check/do:
 StatTracks
 Multi-step trade ups
-!!!! -> Float checker?
 Steam inventory scanner
-Discord bot integration
-Double check best fit skin algorithm
+Discord bot integration reworks
 Check all skins from crate, not just cheapest? Maybe sort by cheapest first.
-
+Trade up generation should be based on buy orders, not sell orders
 """
 
 import os

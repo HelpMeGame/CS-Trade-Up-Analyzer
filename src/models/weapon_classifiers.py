@@ -293,3 +293,4 @@ def get_valid_wears(min_wear: float, max_wear: float, as_int: bool = False) -> l
             valid_wears.append(WearsToStr.BATTLESCARRED)
 
     return valid_wears
+
