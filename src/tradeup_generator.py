@@ -61,7 +61,7 @@ def generate_tradeups():
                     while max_profitable_wear > 0:
                         # ensure the max_profitable_wear isn't changed in the first run, but is in all subsequent runs
                         if decrement_wear:
-                            max_profitable_wear -= 0.01
+                            max_profitable_wear = round(max_profitable_wear - 0.01, 2)
                         else:
                             decrement_wear = True
 
@@ -76,7 +76,7 @@ def generate_tradeups():
                             break
 
                         # get the current skin_1's price
-                        data = db_handler.get_prices(skin_1.skin_id, max_wear)
+                        data = db_handler.get_prices(skin_1.internal_id, max_wear)
 
                         # data does not exist, we'll decrement and try again
                         if data is None:
@@ -136,7 +136,7 @@ def generate_tradeups():
                                 # check if this wear rating is too high
                                 goal_alternative = get_valid_wears(0, estimate, True)[-1].value
                                 if goal_alternative > goal_wear.value:
-                                    max_alternative_wear -= 0.01
+                                    max_alternative_wear = round(max_alternative_wear - 0.01, 2)
                                     continue
                                 else:
                                     # valid wear rating combination, break from this loop
@@ -251,15 +251,14 @@ def generate_tradeups():
                             filler_price,
                             max_profitable_wear,
                             max_alternative_wear,
-                            input_costs,
-                            True
+                            input_costs
                         )
 
                         # exit this loop since we've found a working wear rating
                         break
 
-    # commit trade ups to the DB
-    # db_handler.WORKING_DB.commit()
+            # commit trade ups to the DB
+            db_handler.WORKING_DB.commit()
 
 
 def find_best_fit(origin_case_id: int, remaining_value: float, remaining_count: float, wear: int, rarity: int) -> tuple:

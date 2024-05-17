@@ -45,7 +45,7 @@ def main():
     else:
         steam_creds = ("", "")
 
-    should_wipe = True
+    should_wipe = False
 
     # establish connection to database
     db_handler.connect_to_db(os.path.join(WORKING_PATH.absolute(), "data/skins.db"), wipe_db=should_wipe)
@@ -82,7 +82,7 @@ def main():
             token = f.read()
             f.close()
 
-        # bot.start_bot(token.strip())
+        bot.start_bot(token.strip())
 
 
 if __name__ == "__main__":
