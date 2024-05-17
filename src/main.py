@@ -45,7 +45,7 @@ def main():
     else:
         steam_creds = ("", "")
 
-    should_wipe = False
+    should_wipe = True
 
     # establish connection to database
     db_handler.connect_to_db(os.path.join(WORKING_PATH.absolute(), "data/skins.db"), wipe_db=should_wipe)
@@ -64,11 +64,11 @@ def main():
         resource_collector.collect_rarities(items_game, translations)
 
         # gather prices
-        # market_handler.get_prices(steam_creds)
+        market_handler.get_prices(steam_creds)
 
         # find cheapest prices per crate per rarity
         print("Collecting cheapest prices...")
-        # market_handler.find_cheapest()
+        market_handler.find_cheapest()
 
         # generate all possible trade-ups
         print("Generating trade-ups...")

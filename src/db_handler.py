@@ -33,7 +33,7 @@ def connect_to_db(path: str, wipe_db=False):
         cursor.execute("DROP TABLE IF EXISTS skins")
         cursor.execute("DROP TABLE IF EXISTS tradeups")
         cursor.execute("DROP TABLE IF EXISTS tradeup_skins")
-        # cursor.execute("DROP TABLE IF EXISTS cheapest")
+        cursor.execute("DROP TABLE IF EXISTS cheapest")
         # cursor.execute("DROP TABLE IF EXISTS prices")
 
     cursor.execute("""
@@ -116,6 +116,7 @@ def connect_to_db(path: str, wipe_db=False):
         wear_rating INTEGER,
         market_id INTEGER,
         price_data TEXT,
+        buy_data TEXT,
         FOREIGN KEY (skin_id) REFERENCES skins(internal_id)
     );
     """)
@@ -378,11 +379,11 @@ def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, goal_rarity
         WORKING_DB.commit()
 
 
-def add_price(skin_id: int, wear: int, market_id: int, price: str, commit: bool = False):
+def add_price(skin_id: int, wear: int, market_id: int, sell_data: str, buy_data: str, commit: bool = False):
     cursor = WORKING_DB.cursor()
 
-    cursor.execute("INSERT INTO prices (skin_id, wear_rating, market_id, price_data) VALUES (?, ?, ?, ?)",
-                   (skin_id, wear, market_id, price))
+    cursor.execute("INSERT INTO prices (skin_id, wear_rating, market_id, price_data, buy_data) VALUES (?, ?, ?, ?, ?)",
+                   (skin_id, wear, market_id, sell_data, buy_data))
 
     cursor.close()
 
@@ -483,13 +484,13 @@ async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_nam
 
     criteria_str = " AND ".join(criteria)
 
-    values.append(offset)
+    values.append(offset * 10)
 
     values = tuple(values)
 
     cursor = WORKING_DB.cursor()
 
-    data = cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str} ORDER BY internal_id DESC LIMIT 20 OFFSET ?",
+    data = cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str} ORDER BY chance DESC LIMIT 10 OFFSET ?",
                           values).fetchall()
 
     data_len = len(cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str}",

@@ -86,7 +86,7 @@ def get_prices(steam_creds: tuple[str, str]) -> None:
     # loop through skins and valid wears
     for skin in skins:
         for wear in get_valid_wears(skin.min_wear, skin.max_wear, as_int=True):
-            if db_handler.get_price(skin.internal_id, wear.value) is None:
+            if db_handler.get_prices(skin.internal_id, wear.value) is None:
                 to_retrieve.append((skin.weapon_type, skin.skin_name, wear, skin.internal_id))
 
     print(f"Gathering {len(to_retrieve)} market prices...")
@@ -95,9 +95,9 @@ def get_prices(steam_creds: tuple[str, str]) -> None:
         weapon, name, wear, skin_id = to_retrieve[i]
 
         # remaining time estimator
-        remaining = (len(to_retrieve) - (i + 1)) * 15
+        remaining = (len(to_retrieve) - (i + 1)) * 20
         print(f"\t\t > Handling {i + 1}/{len(to_retrieve)} (~{remaining} seconds -- ETA: "
-              f"{(datetime.datetime.now() + datetime.timedelta(seconds=remaining)).strftime('%I:%M %p %b %e')})")
+              f"{(datetime.datetime.now() + datetime.timedelta(seconds=remaining)).strftime('%I:%M %p, %b %e')})")
 
         # get weapon string
         weapon = WeaponIntToStr[int(weapon)]
@@ -128,13 +128,16 @@ def get_prices(steam_creds: tuple[str, str]) -> None:
             r = req.get(url=item_order_root + str(market_id), cookies=cookie_jar)
 
             # parse returned JSON
-            price_data = r.json()['sell_order_graph']
+            price_data = r.json()
+            sell_orders = price_data['sell_order_graph']
+            buy_orders = price_data['buy_order_graph']
         except IndexError:
-            price_data = {}
+            sell_orders = {}
+            buy_orders = {}
             market_id = -1
 
         # add the price to the database
-        db_handler.add_price(skin_id, wear.value, market_id, json.dumps(price_data), commit=True)
+        db_handler.add_price(skin_id, wear.value, market_id, json.dumps(sell_orders), json.dumps(buy_orders), commit=True)
 
         # check if we are on the last skin or not
         if i + 1 != len(to_retrieve):

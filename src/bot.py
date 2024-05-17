@@ -37,7 +37,7 @@ async def autocomplete_skins(ctx: discord.AutocompleteContext):
     return skins
 
 
-@bot.slash_command(description="List off trade offs with the specified criteria. Lists 20 results at a time.")
+@bot.slash_command(description="List off trade offs with the specified criteria. Lists 10 results at a time.")
 async def list_trade_ups(ctx: discord.ApplicationContext,
                          rarity: discord.Option(input_type=str,
                                                 choices=["Industrial", "Mil-Spec", "Restricted", "Classified",
@@ -71,7 +71,7 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
                                                   min_value=0.001),
                         lower_price: discord.Option(float, description="Lower price bound", required=False),
                          upper_price: discord.Option(float, description="Lower price bound", required=False),
-                         offset: discord.Option(int, description="How many results to offset by.", required=False, default=0)):
+                         offset: discord.Option(int, description="How many results to offset by. 1 offset = 10 results.", required=False, default=0)):
 
     if min_wear > max_wear:
         await ctx.send_response("Min wear cannot be greater than max wear.")
@@ -108,7 +108,7 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
         await ctx.send_response("No trade ups matching that criteria were found.")
         return
 
-    await ctx.send_response((await format_tradeups(tradeups)) + f"\n\n*Displaying {len(tradeups)} of {total_count} total results*")
+    await ctx.send_response((await format_tradeups(tradeups)) + f"\n\n*Displaying {len(tradeups)} of {total_count} total results. Offset of {offset * 10} results.*")
 
 
 async def format_tradeups(tradeups):
@@ -126,7 +126,7 @@ async def format_tradeups(tradeups):
             possible_profit = "`N/A`"
 
         desc.append(
-            f"Trade Up {tradeup.internal_id}: `{wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]} {tradeup.goal_skin.skin_name}`; input price: `${round(input_price, 2):,.2f}`; chance of success: `{round(tradeup.chance * 100)}%`; potential profit: {possible_profit}; roi 10: `{round(tradeup.roi_10 * 100, 2):,.2f}%`")
+            f"- Trade Up {tradeup.internal_id}: `{wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]} {tradeup.goal_skin.skin_name}`; input price: `${round(input_price, 2):,.2f}`; chance of success: `{round(tradeup.chance * 100)}%`; potential profit: {possible_profit}; ROI 10: `{round(tradeup.roi_10 * 100, 2):,.2f}%`")
 
     return "\n".join(desc)
 
