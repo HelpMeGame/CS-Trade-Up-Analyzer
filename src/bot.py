@@ -126,7 +126,7 @@ async def format_tradeups(tradeups):
             possible_profit = "`N/A`"
 
         desc.append(
-            f"Trade Up {tradeup.internal_id}: `{wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]} {tradeup.goal_skin.skin_name}`; input price: `${round(input_price, 2):,.2f}`; chance of success: `{round(tradeup.chance * 100)}%`; potential profit: {possible_profit}; roi 10: `{round(tradeup.roi_10 * 100, 2):,.2f}`")
+            f"Trade Up {tradeup.internal_id}: `{wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]} {tradeup.goal_skin.skin_name}`; input price: `${round(input_price, 2):,.2f}`; chance of success: `{round(tradeup.chance * 100)}%`; potential profit: {possible_profit}; roi 10: `{round(tradeup.roi_10 * 100, 2):,.2f}%`")
 
     return "\n".join(desc)
 
