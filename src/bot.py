@@ -37,7 +37,7 @@ async def autocomplete_skins(ctx: discord.AutocompleteContext):
     return skins
 
 
-@bot.slash_command(description="List off trade offs with the specified criteria")
+@bot.slash_command(description="List off trade offs with the specified criteria. Lists 20 results at a time.")
 async def list_trade_ups(ctx: discord.ApplicationContext,
                          rarity: discord.Option(input_type=str,
                                                 choices=["Industrial", "Mil-Spec", "Restricted", "Classified",
@@ -45,7 +45,7 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
                                                 description="The result's skin rarity to sort by",
                                                 required=False),
                          wear: discord.Option(input_type=str,
-                                              choice=["Factory New", "Minimal Wear", "Field-Tested", "Well-Worn",
+                                              choices=["Factory New", "Minimal Wear", "Field-Tested", "Well-Worn",
                                                       "Battle-Scarred"],
                                               description="The wear rating to sort by",
                                               required=False),
@@ -57,7 +57,32 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
                                                    autocomplete=discord.utils.basic_autocomplete(autocomplete_skins),
                                                    description="The resulting skin's name to sort by",
                                                    required=False),
-                         offset: discord.Option(int, required=False, default=20)):
+                         min_wear: discord.Option(discord.SlashCommandOptionType.number,
+                                                  description="The minimum wear rating that you're willing to use in a trade up",
+                                                  required=False,
+                                                  default=0.001,
+                                                  max_value=1,
+                                                  min_value=0.001),
+                         max_wear: discord.Option(discord.SlashCommandOptionType.number,
+                                                  description="The maximum wear rating that you're willing to use in a trade up",
+                                                  required=False,
+                                                  default=1,
+                                                  max_value=1,
+                                                  min_value=0.001),
+                        lower_price: discord.Option(float, description="Lower price bound", required=False),
+                         upper_price: discord.Option(float, description="Lower price bound", required=False),
+                         offset: discord.Option(int, description="How many results to offset by.", required=False, default=0)):
+
+    if min_wear > max_wear:
+        await ctx.send_response("Min wear cannot be greater than max wear.")
+        return
+
+    if lower_price is None:
+        lower_price = 0
+
+    if upper_price is None:
+        upper_price = 9999999999
+
     if rarity is not None:
         rarity = game_rarity_to_rarity[rarity.lower()].value
 
@@ -74,7 +99,7 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
     if skin_name is not None:
         skin_name = db_handler.get_skins_by_search_name(skin_name.lower())[0]
 
-    tradeups = db_handler.get_tradeups_by_criteria(rarity, wear, weapon, skin_name)
+    tradeups, total_count = await db_handler.get_tradeups_by_criteria(rarity, wear, weapon, skin_name, min_wear, max_wear, lower_price, upper_price, offset)
 
     if tradeups is None:
         await ctx.send_response("Please add a filter.")
@@ -83,30 +108,7 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
         await ctx.send_response("No trade ups matching that criteria were found.")
         return
 
-    await ctx.send_response(await format_tradeups(tradeups[offset - 20:offset]))
-
-
-@bot.slash_command(description="Sorts trade ups by the input price with a lower and upper bound")
-async def get_trade_up_by_input_price(ctx: discord.ApplicationContext,
-                                      lower_bound: discord.Option(float, required=False),
-                                      upper_bound: discord.Option(float, required=False),
-                                      offset: discord.Option(int, required=False, default=20)):
-    if lower_bound is None:
-        lower_bound = 0
-
-    if upper_bound is None:
-        upper_bound = 9999999999
-
-    tradeups = db_handler.get_tradeups_in_price_range(lower_bound, upper_bound)
-
-    if tradeups is None:
-        await ctx.send_response("No valid trade ups found.")
-        return
-    elif len(tradeups) == 0:
-        await ctx.send_response("No trade ups matching that criteria were found.")
-        return
-
-    await ctx.send_response(await format_tradeups(tradeupst[offset - 20:offset]))
+    await ctx.send_response((await format_tradeups(tradeups)) + f"\n\n*Displaying {len(tradeups)} of {total_count} total results*")
 
 
 async def format_tradeups(tradeups):
@@ -124,7 +126,7 @@ async def format_tradeups(tradeups):
             possible_profit = "`N/A`"
 
         desc.append(
-            f"Trade Up `{tradeup.internal_id}`: {tradeup.goal_skin.skin_name}, cost: `${round(input_price, 2):,.2f}`, potential profit: {possible_profit}, roi 10: `{round(tradeup.roi_10, 2):,.2f}`")
+            f"Trade Up {tradeup.internal_id}: `{wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]} {tradeup.goal_skin.skin_name}`; input price: `${round(input_price, 2):,.2f}`; chance of success: `{round(tradeup.chance * 100)}%`; potential profit: {possible_profit}; roi 10: `{round(tradeup.roi_10 * 100, 2):,.2f}`")
 
     return "\n".join(desc)
 
@@ -159,10 +161,10 @@ async def get_trade_up(ctx: discord.ApplicationContext, tradeup_id: discord.Opti
 
     embed.set_footer(text=f"Trade Up ID: {tradeup.internal_id}")
 
-    inputs = f"- {tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_1.weapon_type]} \"{tradeup.skin_1.skin_name}\" (${round(tradeup.skin_1_price, 2):,.2f} per skin)"
+    inputs = f"- {tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_1.weapon_type]} \"{tradeup.skin_1.skin_name}\"\n\t - Max Wear: `{tradeup.skin_1_max_wear}`\n - Price: `${round(tradeup.skin_1_price, 2):,.2f}` each"
 
     if tradeup.skin_2 is not None:
-        inputs += f"\n- {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\" (${round(tradeup.skin_2_price, 2):,.2f} per skin)"
+        inputs += f"\n- {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\"\n\t - Max Wear: `{tradeup.skin_2_max_wear}`\n - Price: `${round(tradeup.skin_2_price, 2):,.2f}` each"
 
     embed.add_field(name=f"Inputs (${round(input_price, 2):,.2f} total)", value=inputs, inline=False)
 
@@ -175,6 +177,9 @@ async def get_trade_up(ctx: discord.ApplicationContext, tradeup_id: discord.Opti
 
 @bot.slash_command(description="Simulate a trade up with a specified number of iterations")
 async def simulate(ctx: discord.ApplicationContext, tradeup_id: int, simulation_iterations: int):
+    await ctx.send_response("Simulation command is being rewritten.")
+    return
+
     try:
         tradeup = db_handler.get_tradeup_by_id(tradeup_id)
     except ValueError:

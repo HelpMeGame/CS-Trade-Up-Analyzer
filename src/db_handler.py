@@ -457,9 +457,9 @@ def get_tradeup_by_id(tradeup_id):
     return TradeUp(data, skins)
 
 
-def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str):
-    criteria = []
-    values = []
+async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str, min_wear: float, max_wear: float, lower_bound: float, upper_bound: float, offset: int):
+    criteria = ["((? <= skin_1_max_wear AND ? >= skin_1_max_wear) OR (? <= skin_2_max_wear AND ? >= skin_2_max_wear))", "input_price >= ? AND input_price <= ?"]
+    values = [min_wear, max_wear, min_wear, max_wear, lower_bound, upper_bound]
 
     if rarity is not None:
         criteria.append("goal_rarity = ?")
@@ -482,13 +482,19 @@ def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str
         return None
 
     criteria_str = " AND ".join(criteria)
+
+    values.append(offset)
+
     values = tuple(values)
 
     cursor = WORKING_DB.cursor()
 
-    data = cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str} ORDER BY profit_100 DESC",
+    data = cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str} ORDER BY internal_id DESC LIMIT 20 OFFSET ?",
                           values).fetchall()
 
+    data_len = len(cursor.execute(f"SELECT internal_id FROM tradeups WHERE {criteria_str}",
+                          values[0:-1]).fetchall())
+
     cursor.close()
 
     tradeups = []
@@ -496,25 +502,4 @@ def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str
     for tradeup in data:
         tradeups.append(get_tradeup_by_id(tradeup[0]))
 
-    return tradeups
-
-
-def get_tradeups_in_price_range(lower_bound: float, upper_bound: float):
-    # create cursor
-    cursor = WORKING_DB.cursor()
-
-    # select valid trade ups
-    data = cursor.execute(
-        "SELECT internal_id FROM tradeups WHERE input_price >= ? AND input_price <= ? ORDER BY profit_100 DESC",
-        (lower_bound, upper_bound)).fetchall()
-
-    # close cursor
-    cursor.close()
-
-    tradeups = []
-
-    # case to trade up objects
-    for tradeup in data:
-        tradeups.append(get_tradeup_by_id(tradeup[0]))
-
-    return tradeups
+    return tradeups, data_len
