@@ -86,7 +86,7 @@ def generate_tradeups():
                         price = data[0][0]
 
                         # gather price data for the current goal skin
-                        goal_price = db_handler.get_buy_orders(goal_skin.internal_id, goal_wear.value)
+                        goal_price = db_handler.get_prices(goal_skin.internal_id, goal_wear.value)
 
                         # if price data doesn't exist for this goal, we can skip it
                         if goal_price is None:

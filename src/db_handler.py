@@ -33,7 +33,7 @@ def connect_to_db(path: str, wipe_db=False):
         cursor.execute("DROP TABLE IF EXISTS skins")
         cursor.execute("DROP TABLE IF EXISTS tradeups")
         cursor.execute("DROP TABLE IF EXISTS tradeup_skins")
-        cursor.execute("DROP TABLE IF EXISTS cheapest")
+        # cursor.execute("DROP TABLE IF EXISTS cheapest")
         # cursor.execute("DROP TABLE IF EXISTS prices")
 
     cursor.execute("""
