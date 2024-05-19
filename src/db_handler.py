@@ -355,6 +355,25 @@ def get_prices(skin_id: int, wear: int):
     return data
 
 
+def get_buy_orders(skin_id: int, wear: int):
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute("SELECT buy_data FROM prices WHERE skin_id = ? AND wear_rating = ?",
+                          (skin_id, wear)).fetchone()
+
+    cursor.close()
+
+    if data is None:
+        return None
+
+    data = json.loads(data[0])
+
+    if data == {} or data == []:
+        return None
+
+    return data
+
+
 def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, goal_rarity: int, goal_weapon: int, skin_1_count,
                 chance: float, roi_10: float,
                 roi_100: float, profit_10: float,
