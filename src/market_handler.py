@@ -115,7 +115,13 @@ def get_prices(steam_creds: tuple[str, str]) -> None:
             pass
 
         # grab HTML for page
-        html = req.get(url=market_root + quote(hash_name), cookies=cookie_jar).content
+        try:
+            html = req.get(url=market_root + quote(hash_name), cookies=cookie_jar).content
+        except:
+            # sleep in case the request fails, attempts to let rate limits flow over
+            time.sleep(1800)
+            html = req.get(url=market_root + quote(hash_name), cookies=cookie_jar).content
+
 
         try:
             # gather market ID
@@ -125,7 +131,12 @@ def get_prices(steam_creds: tuple[str, str]) -> None:
             cookie_jar["Referer"] = market_root + quote(hash_name)
 
             # send get request
-            r = req.get(url=item_order_root + str(market_id), cookies=cookie_jar)
+            try:
+                r = req.get(url=item_order_root + str(market_id), cookies=cookie_jar)
+            except:
+                # sleep in case the request fails, attempts to let rate limits flow over
+                time.sleep(1800)
+                r = req.get(url=item_order_root + str(market_id), cookies=cookie_jar)
 
             # parse returned JSON
             price_data = r.json()
