@@ -122,14 +122,14 @@ def collect_skins(item_json: dict, translation_json: dict) -> None:
         item = item_json['paint_kits'][item]
 
         try:
-            if "wear_default" in item.keys():
-                wear_remap_min = item['wear_default']
-                wear_remap_max = item['wear_default']
-            elif "wear_remap_min" in item.keys():
+            if "wear_remap_min" in item.keys():
                 wear_remap_min = item['wear_remap_min']
-                wear_remap_max = item['wear_remap_max']
             else:
                 wear_remap_min = 0
+
+            if "wear_remap_max" in item.keys():
+                wear_remap_max = item['wear_remap_max']
+            else:
                 wear_remap_max = 1
 
             # add item to items_by_name dictionary

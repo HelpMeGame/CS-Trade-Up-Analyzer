@@ -11,7 +11,6 @@ Generator algorithms for determining best possible trade ups for a given skin
 
 """
 
-import math
 import random
 import db_handler
 from src.models.skin import Skin
