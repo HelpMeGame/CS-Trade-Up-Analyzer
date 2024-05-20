@@ -71,7 +71,9 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
                                                   min_value=0.001),
                         lower_price: discord.Option(float, description="Lower price bound", required=False),
                          upper_price: discord.Option(float, description="Lower price bound", required=False),
-                         offset: discord.Option(int, description="How many results to offset by. 1 offset = 10 results.", required=False, default=0)):
+                         roi_10_min: discord.Option(float, description="Lower ROI bound", required=False),
+                         roi_10_max: discord.Option(float, description="Upper ROI bound", required=False),
+                         offset: discord.Option(int, description="How many results to offset by. 1 offset = 10 results.", required=False, default=0),):
 
     if min_wear > max_wear:
         await ctx.send_response("Min wear cannot be greater than max wear.")
@@ -82,6 +84,12 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
 
     if upper_price is None:
         upper_price = 9999999999
+
+    if roi_10_min is None:
+        roi_10_min = 0
+
+    if roi_10_max is None:
+        roi_10_max = 9999999999
 
     if rarity is not None:
         rarity = game_rarity_to_rarity[rarity.lower()].value
@@ -99,7 +107,7 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
     if skin_name is not None:
         skin_name = db_handler.get_skins_by_search_name(skin_name.lower())[0]
 
-    tradeups, total_count = await db_handler.get_tradeups_by_criteria(rarity, wear, weapon, skin_name, min_wear, max_wear, lower_price, upper_price, offset)
+    tradeups, total_count = await db_handler.get_tradeups_by_criteria(rarity, wear, weapon, skin_name, min_wear, max_wear, lower_price, upper_price, roi_10_min, roi_10_max, offset)
 
     if tradeups is None:
         await ctx.send_response("Please add a filter.")

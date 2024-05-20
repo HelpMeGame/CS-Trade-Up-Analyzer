@@ -433,53 +433,9 @@ def get_cheapest_by_crate_rarity_and_wear(crate_id: int, rarity: int, wear: int)
     return data
 
 
-def get_tradeup_by_id(tradeup_id):
-    cursor = WORKING_DB.cursor()
-
-    data = cursor.execute("SELECT * FROM tradeups WHERE internal_id = ?", (tradeup_id,)).fetchone()
-
-    if data is None:
-        cursor.close()
-        return None
-
-    data = list(data)
-
-    goal_skin_data = cursor.execute("SELECT * FROM skins WHERE internal_id = ?", (data[1],)).fetchone()
-
-    if goal_skin_data is None:
-        cursor.close()
-        return None
-
-    data[1] = Skin(goal_skin_data)
-
-    skin_ids = cursor.execute("SELECT skin_id FROM tradeup_skins WHERE tradeup_id = ?", (tradeup_id,)).fetchall()
-
-    if skin_ids is None:
-        cursor.close()
-        return None
-
-    skin_data = []
-    for skin_id in skin_ids:
-        skin_data.append(cursor.execute("SELECT * FROM skins WHERE internal_id = ?", (skin_id[0],)).fetchone())
-
-    cursor.close()
-
-    if skin_data is None:
-        return None
-
-    skins = []
-    for skin in skin_data:
-        if skin is not None:
-            skins.append(Skin(skin))
-        else:
-            return None
-
-    return TradeUp(data, skins)
-
-
-async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str, min_wear: float, max_wear: float, lower_bound: float, upper_bound: float, offset: int):
-    criteria = ["((? <= skin_1_max_wear AND ? >= skin_1_max_wear) OR (? <= skin_2_max_wear AND ? >= skin_2_max_wear))", "input_price >= ? AND input_price <= ?"]
-    values = [min_wear, max_wear, min_wear, max_wear, lower_bound, upper_bound]
+async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str, min_wear: float, max_wear: float, lower_bound: float, upper_bound: float, lower_roi:float, upper_roi: float, offset: int):
+    criteria = ["((? <= skin_1_max_wear AND ? >= skin_1_max_wear) OR (? <= skin_2_max_wear AND ? >= skin_2_max_wear))", "input_price >= ? AND input_price <= ?", "? <= roi_10 AND ? >= roi_10"]
+    values = [min_wear, max_wear, min_wear, max_wear, lower_bound, upper_bound, lower_roi, upper_roi]
 
     if rarity is not None:
         criteria.append("goal_rarity = ?")
@@ -523,3 +479,47 @@ async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_nam
         tradeups.append(get_tradeup_by_id(tradeup[0]))
 
     return tradeups, data_len
+
+
+def get_tradeup_by_id(tradeup_id):
+    cursor = WORKING_DB.cursor()
+
+    data = cursor.execute("SELECT * FROM tradeups WHERE internal_id = ?", (tradeup_id,)).fetchone()
+
+    if data is None:
+        cursor.close()
+        return None
+
+    data = list(data)
+
+    goal_skin_data = cursor.execute("SELECT * FROM skins WHERE internal_id = ?", (data[1],)).fetchone()
+
+    if goal_skin_data is None:
+        cursor.close()
+        return None
+
+    data[1] = Skin(goal_skin_data)
+
+    skin_ids = cursor.execute("SELECT skin_id FROM tradeup_skins WHERE tradeup_id = ?", (tradeup_id,)).fetchall()
+
+    if skin_ids is None:
+        cursor.close()
+        return None
+
+    skin_data = []
+    for skin_id in skin_ids:
+        skin_data.append(cursor.execute("SELECT * FROM skins WHERE internal_id = ?", (skin_id[0],)).fetchone())
+
+    cursor.close()
+
+    if skin_data is None:
+        return None
+
+    skins = []
+    for skin in skin_data:
+        if skin is not None:
+            skins.append(Skin(skin))
+        else:
+            return None
+
+    return TradeUp(data, skins)
