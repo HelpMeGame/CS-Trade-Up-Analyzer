@@ -87,9 +87,13 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
 
     if roi_10_min is None:
         roi_10_min = 0
+    else:
+        roi_10_min /= 100
 
     if roi_10_max is None:
         roi_10_max = 9999999999
+    else:
+        roi_10_max /= 100
 
     if rarity is not None:
         rarity = game_rarity_to_rarity[rarity.lower()].value

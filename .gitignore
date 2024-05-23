@@ -2,5 +2,6 @@
 /.idea/
 */__pycache__/
 *.pyc
-data/.creds
+data/.steam-creds
 data/.bot-creds
+data/.db-creds

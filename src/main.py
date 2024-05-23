@@ -32,23 +32,31 @@ WORKING_PATH = pathlib.Path(os.curdir)
 
 
 def main():
+    should_wipe = True
+
     # gather the data from the resource files
     items_game, translations = resource_collector.gather_file_data(
         os.path.join(WORKING_PATH.absolute(), "data/items_game.json"),
         os.path.join(WORKING_PATH.absolute(), "data/csgo_english.json")
     )
 
-    if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.creds")):
-        with open(os.path.join(WORKING_PATH.absolute(), "data/.creds"), "r") as f:
+    if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.steam-creds")):
+        with open(os.path.join(WORKING_PATH.absolute(), "data/.steam-creds"), "r") as f:
             steam_creds = tuple(f.readlines())
             f.close()
     else:
         steam_creds = ("", "")
 
-    should_wipe = True
+    if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.db-creds")):
+        with open(os.path.join(WORKING_PATH.absolute(), "data/.db-creds"), "r") as f:
+            db_creds = tuple(f.readlines())
+            f.close()
+    else:
+        db_creds = ("", "")
 
     # establish connection to database
-    db_handler.connect_to_db(os.path.join(WORKING_PATH.absolute(), "data/skins.db"), wipe_db=should_wipe)
+    print("Establishing connection to database...")
+    db_handler.connect_to_db(db_creds, wipe_db=should_wipe)
 
     if should_wipe:
         # collect crate information
@@ -64,6 +72,7 @@ def main():
         resource_collector.collect_rarities(items_game, translations)
 
         # gather prices
+        print("Gathering market prices...")
         # market_handler.get_prices(steam_creds)
 
         # find cheapest prices per crate per rarity
