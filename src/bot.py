@@ -198,7 +198,7 @@ async def get_trade_up(ctx: discord.ApplicationContext, tradeup_id: discord.Opti
 
 @bot.slash_command(description="Simulate a trade up with a specified number of iterations")
 async def simulate(ctx: discord.ApplicationContext, tradeup_id: discord.Option(int),
-                   simulation_iterations: discord.Option(discord.SlashCommandOptionType.number, min_value=1,
+                   simulation_iterations: discord.Option(discord.SlashCommandOptionType.integer, min_value=1,
                                                          max_value=100000)):
     try:
         tradeup = db_handler.get_tradeup_by_id(tradeup_id)
@@ -229,6 +229,8 @@ async def simulate(ctx: discord.ApplicationContext, tradeup_id: discord.Option(i
     average = ((tradeup.skin_1_max_wear * tradeup.skin_1_count) + (
             (10 - tradeup.skin_1_count) * tradeup.skin_2_max_wear)) / 10
 
+    message = await ctx.send_response("Simulating...")
+
     data = tradeup_generator.simulate(
         input_costs=tradeup.input_price,
         case_1_possibilities=case_1_possibilities,
@@ -250,7 +252,7 @@ async def simulate(ctx: discord.ApplicationContext, tradeup_id: discord.Option(i
     if data[-1]:
         embed.set_footer(text="Warning: a skin with an unknown price was used in this simulation.")
 
-    await ctx.send_response(embed=embed)
+    await message.edit(embed=embed, content="")
 
 
 @bot.slash_command(description="Get a breakdown of the profits & losses that could result from a trade up")
@@ -283,7 +285,7 @@ async def profit_breakdown(ctx: discord.ApplicationContext, tradeup_id: discord.
     profit = 0
 
     for skin in case_1:
-        skin_desc, has_profit = format_skin_profit(skin, average, tradeup.input_price, case_1_chance)
+        skin_desc, has_profit = await format_skin_profit(skin, average, tradeup.input_price, case_1_chance)
 
         desc += skin_desc
 
@@ -310,7 +312,8 @@ async def profit_breakdown(ctx: discord.ApplicationContext, tradeup_id: discord.
     # create embed
     embed = discord.Embed(
         title=f"Profit Breakdown For Trade Up {tradeup_id}",
-        description=desc
+        description=desc,
+        colour=rarity_to_color[tradeup.goal_rarity]
     )
 
     # send embed
@@ -378,7 +381,8 @@ async def get_skin(ctx: discord.ApplicationContext, skin_id: discord.Option(int)
 
     embed = discord.Embed(
         title=f"{WeaponIntToStr[skin.weapon_type]} \"{skin.skin_name}\"",
-        description=desc
+        description=desc,
+        colour=rarity_to_color[skin.rarity]
     )
 
     embed.set_footer(text=f"Internal ID: {skin.internal_id}")

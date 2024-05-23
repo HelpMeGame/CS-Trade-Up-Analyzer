@@ -18,10 +18,7 @@ from src.models.skin import Skin
 from src.models.weapon_classifiers import get_valid_wears
 from src.models.simulation_possibility import SimulationPossibility
 
-THREAD_COUNT = 16
-
-
-def generate_tradeups(db_creds):
+def generate_tradeups(db_creds, thread_count):
     for i in range(1, 6):
 
         # get skins of this rarity
@@ -41,20 +38,20 @@ def generate_tradeups(db_creds):
         # expected float = ((goal_max_float - goal_min_float) * average_float) + goal_min_float
 
         # create empty list for skins
-        divided_list = [[] for i in range(THREAD_COUNT)]
+        divided_list = [[] for i in range(thread_count)]
 
         # shuffle skins to hopefully achieve a faster runtime
         random.shuffle(skins)
 
         # split skins into divided skin list
         for i in range(len(skins)):
-            divided_list[i % THREAD_COUNT].append(skins[i])
+            divided_list[i % thread_count].append(skins[i])
 
         # create empty thread tracker
         threads = []
 
         # create & start threads
-        for i in range(THREAD_COUNT):
+        for i in range(thread_count):
             # create a thread to work on a skin
             threads.append(threading.Thread(target=generate_tradeup, args=[db_creds, divided_list[i]]))
 

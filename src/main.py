@@ -28,11 +28,11 @@ import tradeup_generator
 import resource_collector
 
 WORKING_PATH = pathlib.Path(os.curdir)
+SHOULD_WIPE = False
+THREAD_COUNT = 32
 
 
 def main():
-    should_wipe = True
-
     # gather the data from the resource files
     items_game, translations = resource_collector.gather_file_data(
         os.path.join(WORKING_PATH.absolute(), "data/items_game.json"),
@@ -55,9 +55,9 @@ def main():
 
     # establish connection to database
     print("Establishing connection to database...")
-    db_handler.establish_db(db_creds, wipe_db=should_wipe)
+    db_handler.establish_db(db_creds, wipe_db=SHOULD_WIPE)
 
-    if should_wipe:
+    if SHOULD_WIPE:
         # collect crate information
         print("Collecting crate info...")
         resource_collector.collect_crates(items_game, translations)
@@ -80,7 +80,7 @@ def main():
 
         # generate all possible trade-ups
         print("Generating trade-ups...")
-        tradeup_generator.generate_tradeups(db_creds)
+        tradeup_generator.generate_tradeups(db_creds, THREAD_COUNT)
 
     if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.bot-creds")):
         print("Starting bot...")
