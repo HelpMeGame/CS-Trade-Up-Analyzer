@@ -185,7 +185,7 @@ def simulate(input_costs: float,
     for i in range(len(case_2_possibilities)):
         chance_range.append(chance_range[-1] + (10 - best_count))
 
-    # simulate 100 random trade ups
+    # simulate random trade ups
     for i in range(iterations):
         # get random value
         r = random.randint(1, total_tickets)

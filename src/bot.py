@@ -216,7 +216,7 @@ async def simulate(ctx: discord.ApplicationContext, tradeup_id: discord.Option(i
 
     if tradeup.skin_2 is not None:
         # gather case 2 skins
-        case_2_skins = db_handler.get_skins_by_crate_and_rarity(tradeup.skin_2.crate_id, tradeup.skin_2.crate_id)
+        case_2_skins = db_handler.get_skins_by_crate_and_rarity(tradeup.skin_2.crate_id, tradeup.skin_2.rarity)
 
         # turn skins into possibility objects
         case_2_possibilities = [SimulationPossibility(skin) for skin in case_2_skins]
@@ -242,7 +242,7 @@ async def simulate(ctx: discord.ApplicationContext, tradeup_id: discord.Option(i
         iterations=simulation_iterations
     )
 
-    desc = f"Trade Up ID: `{tradeup_id}`\nInput Price: `${tradeup.input_price:,.2f}`\n\nNumber of Iterations: `{simulation_iterations}`\n\nROI: `{round(data[1], 2):,.2f}%`\nProfit: `${round(data[3], 2):,.2f}`"
+    desc = f"Trade Up ID: `{tradeup_id}`\nInput Price: `${tradeup.input_price:,.2f}`\n\nNumber of Iterations: `{simulation_iterations:,}`\n\nROI: `{round((data[1] * 100), 2):,.2f}%`\nProfit: `${round(data[3], 2):,.2f}`"
 
     embed = discord.Embed(
         title="Simulation Results",
@@ -278,7 +278,7 @@ async def profit_breakdown(ctx: discord.ApplicationContext, tradeup_id: discord.
 
     case_1_name = db_handler.get_crate_from_internal(tradeup.skin_1.crate_id).crate_name
 
-    desc = f"**Case 1 (*{case_1_name}*)**:"
+    desc = f"Goal: {WeaponIntToStr[tradeup.goal_skin.weapon_type]} \"{tradeup.goal_skin.skin_name}\" ({wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]})\n\n**Case 1 (*{case_1_name}*)**:"
 
     case_1_chance = (tradeup.skin_1_count / total_tickets) * 100
 
