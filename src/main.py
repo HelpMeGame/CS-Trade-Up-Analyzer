@@ -31,7 +31,7 @@ WORKING_PATH = pathlib.Path(os.curdir)
 
 
 def main():
-    should_wipe = False
+    should_wipe = True
 
     # gather the data from the resource files
     items_game, translations = resource_collector.gather_file_data(

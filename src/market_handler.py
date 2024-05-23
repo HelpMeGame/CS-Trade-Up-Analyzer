@@ -36,7 +36,7 @@ def find_cheapest() -> None:
                     prices = db_handler.get_prices(skin.internal_id, wear)
 
                     # if there is no valid price, skip this
-                    if prices is None or prices == {}:
+                    if prices is None:
                         continue
 
                     total = 0

@@ -268,9 +268,6 @@ def generate_tradeup(*args):
 
         # loop through all valid wear ratings for current skin
         for goal_wear in get_valid_wears(goal_skin.min_wear, goal_skin.max_wear, True):
-            # loop through all wear ratings, and determine the most profitable
-            max_profitable_wear = 1
-
             # get a list of all the skins that can be used to trade up into the goal skin
             valid_skins = db_handler.get_skins_by_crate_and_rarity(goal_skin.crate_id, goal_skin.rarity - 1, db)
 
@@ -389,7 +386,7 @@ def generate_tradeup(*args):
 
                         # call the filler skin algorithm to get our data
                         filler_skin_data = find_best_fit(goal_skin.crate_id, remaining_value, remaining_count,
-                                                         goal_alternative, goal_skin.rarity - 1, db)
+                                                         get_valid_wears(0, max_alternative_wear, True)[-1].value, goal_skin.rarity - 1, db)
 
                         # no valid skin found! skip this combinations.
                         if filler_skin_data[0] is None:
@@ -485,5 +482,5 @@ def generate_tradeup(*args):
         # commit trade ups to the DB
         db.commit()
 
-        # close db connection
-        db.close()
+    # close db connection
+    db.close()
