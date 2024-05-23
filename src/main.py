@@ -31,6 +31,10 @@ WORKING_PATH = pathlib.Path(os.curdir)
 SHOULD_WIPE = False
 THREAD_COUNT = 32
 
+"""
+Rarity calculation system needs to be checked
+"""
+
 
 def main():
     # gather the data from the resource files
@@ -68,7 +72,7 @@ def main():
 
         # collect rarities
         print("Collecting skin rarities...")
-        resource_collector.collect_rarities(items_game, translations)
+        resource_collector.collect_rarities(items_game)
 
         # gather prices
         print("Gathering market prices...")

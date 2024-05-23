@@ -14,7 +14,7 @@ Collects the resources required for trade up generation
 import re
 import json
 import db_handler
-from models.weapon_classifiers import str_to_weapon, get_rarity
+from models.weapon_classifiers import str_to_weapon, get_rarity, RarityToInt
 
 # the following is a manually defined list of sets
 # that aren't "crates" but can still have trade ups.
@@ -55,6 +55,11 @@ MANUAL_SETS = [
     ["CSGO_set_vertigo_2021", "set_vertigo_2021"],
     ["CSGO_set_anubis", "set_anubis"]
 ]
+
+MANUAL_RARITY_OVERRIDES = {
+    "[cu_usp_spitfire]weapon_usps_silencer": RarityToInt.Legendary,
+    "[hy_blam_simple]weapon_awp": RarityToInt.Legendary
+}
 
 
 def gather_file_data(items_game_path: str, csgo_english_path: str) -> [dict, dict]:
@@ -180,7 +185,7 @@ def collect_skins(item_json: dict, translation_json: dict) -> None:
     db_handler.WORKING_DB.commit()
 
 
-def collect_rarities(item_json: dict, translation_json: dict):
+def collect_rarities(item_json: dict):
     for set_id in item_json['client_loot_lists'].keys():
         set_data = set_id.split("_")
 
@@ -200,7 +205,10 @@ def collect_rarities(item_json: dict, translation_json: dict):
             db_handler.update_skin_rarity(skin, rarity.value)
 
     for skin in db_handler.get_skins_by_rarity(-1):
-        rarity = get_rarity(item_json['paint_kits_rarity'][skin.skin_tag])
+        if skin.skin_id in MANUAL_RARITY_OVERRIDES:
+            rarity = MANUAL_RARITY_OVERRIDES[skin.skin_id]
+        else:
+            rarity = get_rarity(item_json['paint_kits_rarity'][skin.skin_tag])
         db_handler.update_skin_rarity(skin.skin_id, rarity.value)
 
     for case in db_handler.get_all_crates():

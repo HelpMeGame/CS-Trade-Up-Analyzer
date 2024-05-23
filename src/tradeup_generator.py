@@ -298,6 +298,8 @@ def generate_tradeup(*args):
                     if data is None:
                         continue
 
+                    # loop through data and make sure there are more than 10 listings. If theres not, use buy order data
+
                     # set cheapest skin id/price variables from data
                     price = data[0][0]
 

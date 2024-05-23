@@ -276,9 +276,9 @@ async def profit_breakdown(ctx: discord.ApplicationContext, tradeup_id: discord.
     average = ((tradeup.skin_1_max_wear * tradeup.skin_1_count) + (
             (10 - tradeup.skin_1_count) * tradeup.skin_2_max_wear)) / 10
 
-    case_1_name = db_handler.get_crate_from_internal(tradeup.skin_1.crate_id).crate_name
+    case_1_obj = db_handler.get_crate_from_internal(tradeup.skin_1.crate_id)
 
-    desc = f"Goal: {WeaponIntToStr[tradeup.goal_skin.weapon_type]} \"{tradeup.goal_skin.skin_name}\" ({wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]})\n\n**Case 1 (*{case_1_name}*)**:"
+    desc = f"Goal: {WeaponIntToStr[tradeup.goal_skin.weapon_type]} \"{tradeup.goal_skin.skin_name}\" ({wear_int_enum_to_str_enum[wear_int_to_enum[tradeup.goal_wear]]})\n\n{case_1_obj.crate_name} (`{case_1_obj.internal_id}`):"
 
     case_1_chance = (tradeup.skin_1_count / total_tickets) * 100
 
@@ -293,9 +293,9 @@ async def profit_breakdown(ctx: discord.ApplicationContext, tradeup_id: discord.
             profit += case_1_chance
 
     if tradeup.skin_2 is not None:
-        case_2_name = db_handler.get_crate_from_internal(tradeup.skin_2.crate_id).crate_name
+        case_2_obj = db_handler.get_crate_from_internal(tradeup.skin_2.crate_id)
 
-        desc += f"\n\n**Case 2 (*{case_2_name}*)**:"
+        desc += f"\n\n{case_2_obj.crate_name} (`{case_2_obj.internal_id}`):"
 
         case_2_chance = ((10 - tradeup.skin_1_count) / total_tickets) * 100
 
@@ -346,6 +346,7 @@ async def format_skin_profit(skin: Skin, average: float, input_price: float, cha
 
     # set skin chance
     desc += f"\n - Chance: `{chance:,.2f}%`"
+    desc += f"\n - *Internal ID: `{skin.internal_id}`*"
 
     # if we have profit, return the chance
     if profit > 0:
@@ -365,7 +366,7 @@ async def get_skin(ctx: discord.ApplicationContext, skin_id: discord.Option(int)
         await ctx.send_response("Skin could not be found.")
         return
 
-    desc = f"Skin Name: `{skin.skin_name}`\nRarity: `{rarity_int_to_game_rarity[skin.rarity]}`\nSkin ID: `{skin.skin_id}`\nSkin Tag: `{skin.skin_tag}`\n\nMin Wear: `{skin.min_wear}`\nMax Wear: `{skin.max_wear}`\nPossible Wear Ratings:"
+    desc = f"Skin Name: `{skin.skin_name}`\nRarity: `{rarity_int_to_game_rarity[skin.rarity]}`\n\nSkin ID: `{skin.skin_id}`\nSkin Tag: `{skin.skin_tag}`\n\nMin Wear: `{skin.min_wear}`\nMax Wear: `{skin.max_wear}`\nPossible Wear Ratings:"
 
     for rating in get_valid_wears(skin.min_wear, skin.max_wear):
         prices = db_handler.get_prices(skin.internal_id, str_to_wear[rating].value)
@@ -377,7 +378,8 @@ async def get_skin(ctx: discord.ApplicationContext, skin_id: discord.Option(int)
 
         desc += f"\n- {rating} (`{price}`)"
 
-    desc += f"\n\nCase: `{db_handler.get_crate_from_internal(skin.crate_id).crate_name}`"
+    case = db_handler.get_crate_from_internal(skin.crate_id)
+    desc += f"\n\nCase: `{case.crate_name}` (`{case.internal_id}`)"
 
     embed = discord.Embed(
         title=f"{WeaponIntToStr[skin.weapon_type]} \"{skin.skin_name}\"",
@@ -386,6 +388,38 @@ async def get_skin(ctx: discord.ApplicationContext, skin_id: discord.Option(int)
     )
 
     embed.set_footer(text=f"Internal ID: {skin.internal_id}")
+
+    await ctx.send_response(embed=embed)
+
+
+@bot.slash_command(description="Get information about a case")
+async def get_case(ctx: discord.ApplicationContext, case_id: discord.Option(int)):
+    case = db_handler.get_crate_from_internal(case_id)
+
+    if case is None:
+        await ctx.send_response("Case could not be found.")
+        return
+
+    desc = f"Case ID: `{case.crate_id}`\nSet ID: `{case.set_id}`\n\nSkins:"
+
+    for rarity in range(0, 6):
+        if case.rarity_counts[rarity] > 0:
+            desc += f"\n- {rarity_int_to_game_rarity[rarity]} ({case.rarity_counts[rarity]} skin"
+
+            if case.rarity_counts[rarity] > 1:
+                desc += "s"
+
+            desc += ")"
+
+            for skin in db_handler.get_skins_by_crate_and_rarity(case.internal_id, rarity):
+                desc += f"\n - {WeaponIntToStr[skin.weapon_type]} \"{skin.skin_name}\" (`{skin.internal_id}`)"
+
+    embed = discord.Embed(
+        title=case.crate_name,
+        description=desc
+    )
+
+    embed.set_footer(text=f"Internal ID: {case.internal_id}")
 
     await ctx.send_response(embed=embed)
 

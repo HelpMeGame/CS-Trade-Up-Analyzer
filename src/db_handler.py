@@ -176,6 +176,9 @@ def get_crate_from_internal(internal_id: int):
 
     cursor.close()
 
+    if crate is None:
+        return None
+
     return Crate(crate)
 
 
