@@ -52,11 +52,11 @@ def main():
             db_creds = tuple(f.readlines())
             f.close()
     else:
-        db_creds = ("", "")
+        db_creds = ("", "", "", "", "")
 
     # establish connection to database
     print("Establishing connection to database...")
-    db_handler.connect_to_db(db_creds, wipe_db=should_wipe)
+    db_handler.establish_db(db_creds, wipe_db=should_wipe)
 
     if should_wipe:
         # collect crate information
@@ -81,7 +81,7 @@ def main():
 
         # generate all possible trade-ups
         print("Generating trade-ups...")
-        tradeup_generator.generate_tradeups()
+        tradeup_generator.generate_tradeups(db_creds)
 
         print("\n\n")
 
