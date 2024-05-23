@@ -15,8 +15,8 @@ Crate class type for use with the database. Created through getting a crate in t
 class Crate:
     def __init__(self, crate_data):
         self.internal_id = crate_data[0]
-        self.crate_name = crate_data[1]
-        self.crate_id = crate_data[2]
+        self.crate_id = crate_data[1]
+        self.crate_name = crate_data[2]
         self.set_id = crate_data[3]
         self.rarity_0_count = crate_data[4]
         self.rarity_1_count = crate_data[5]

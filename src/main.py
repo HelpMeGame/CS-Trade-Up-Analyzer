@@ -26,13 +26,12 @@ import db_handler
 import market_handler
 import tradeup_generator
 import resource_collector
-from models.weapon_classifiers import wear_int_to_enum, wear_int_enum_to_str_enum, WeaponIntToStr
 
 WORKING_PATH = pathlib.Path(os.curdir)
 
 
 def main():
-    should_wipe = True
+    should_wipe = False
 
     # gather the data from the resource files
     items_game, translations = resource_collector.gather_file_data(
@@ -82,8 +81,6 @@ def main():
         # generate all possible trade-ups
         print("Generating trade-ups...")
         tradeup_generator.generate_tradeups(db_creds)
-
-        print("\n\n")
 
     if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.bot-creds")):
         print("Starting bot...")

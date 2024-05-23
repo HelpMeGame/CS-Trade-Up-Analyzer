@@ -482,9 +482,9 @@ def get_cheapest_by_crate_rarity_and_wear(crate_id: int, rarity: int, wear: int,
 
 async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str, min_wear: float,
                                    max_wear: float, lower_bound: float, upper_bound: float, lower_roi: float,
-                                   upper_roi: float, offset: int):
+                                   upper_roi: float, offset: int, sort_by: str):
     criteria = [
-        "((%s <= skin_1_max_wear AND %s >= skin_1_max_wear) OR (%s <= skin_2_max_wear AND %s >= skin_2_max_wear))",
+        "((%s <= skin_1_max_wear AND %s >= skin_1_max_wear) AND (%s <= skin_2_max_wear AND %s >= skin_2_max_wear))",
         "input_price >= %s AND input_price <= %s", "%s <= roi_10 AND %s >= roi_10"]
     values = [min_wear, max_wear, min_wear, max_wear, lower_bound, upper_bound, lower_roi, upper_roi]
 
@@ -517,7 +517,7 @@ async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_nam
     cursor = WORKING_DB.cursor()
 
     cursor.execute(
-        f"SELECT internal_id FROM tradeups WHERE {criteria_str} ORDER BY chance DESC LIMIT 10 OFFSET %s",
+        f"SELECT internal_id FROM tradeups WHERE {criteria_str} ORDER BY {sort_by} DESC LIMIT 10 OFFSET %s",
         values)
     data = cursor.fetchall()
 

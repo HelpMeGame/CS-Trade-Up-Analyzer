@@ -72,7 +72,8 @@ def generate_tradeups(db_creds):
             print(f"\t\t> Completed {total_complete}/{len(skins)}")
 
 
-def find_best_fit(origin_case_id: int, remaining_value: float, remaining_count: float, wear: int, rarity: int, db) -> tuple:
+def find_best_fit(origin_case_id: int, remaining_value: float, remaining_count: float, wear: int, rarity: int,
+                  db) -> tuple:
     # gather all cases, sort by rarity count for this rarity
     cases = db_handler.get_all_crates(db)
 
@@ -158,7 +159,8 @@ def simulate(input_costs: float,
              total_tickets: int,
              best_count: int,
              average_wear: float,
-             db):
+             db,
+             iterations: int = 100):
     # set default ROI lists to empty
     roi_10 = []
     roi_100 = []
@@ -187,7 +189,7 @@ def simulate(input_costs: float,
         chance_range.append(chance_range[-1] + (10 - best_count))
 
     # simulate 100 random trade ups
-    for i in range(100):
+    for i in range(iterations):
         # get random value
         r = random.randint(1, total_tickets)
 
@@ -245,7 +247,13 @@ def simulate(input_costs: float,
 
 
 def estimate_wear(skin: Skin | SimulationPossibility, average_wear: float):
-    return ((skin.max_wear - skin.min_wear) * average_wear) + skin.min_wear
+    estimate = ((skin.max_wear - skin.min_wear) * average_wear) + skin.min_wear
+
+    # ensure the estimated wear is not larger than the max
+    if estimate > skin.max_wear:
+        estimate = skin.max_wear
+
+    return estimate
 
 
 def generate_tradeup(*args):
@@ -339,7 +347,7 @@ def generate_tradeup(*args):
 
                             # get a rough average wear rating prediction
                             average = ((
-                                                   max_profitable_wear * skin_1_best)  # generate average for cheapest skin with max_profitable
+                                               max_profitable_wear * skin_1_best)  # generate average for cheapest skin with max_profitable
                                        + ((10 - skin_1_best) * max_alternative_wear)
                                        # generate average for filler skins with max_alternative
                                        ) / 10
@@ -476,3 +484,6 @@ def generate_tradeup(*args):
 
         # commit trade ups to the DB
         db.commit()
+
+        # close db connection
+        db.close()
