@@ -199,7 +199,7 @@ async def get_trade_up(ctx: discord.ApplicationContext, tradeup_id: discord.Opti
 @bot.slash_command(description="Simulate a trade up with a specified number of iterations")
 async def simulate(ctx: discord.ApplicationContext, tradeup_id: discord.Option(int),
                    simulation_iterations: discord.Option(discord.SlashCommandOptionType.integer, min_value=1,
-                                                         max_value=100000)):
+                                                         max_value=10000)):
     try:
         tradeup = db_handler.get_tradeup_by_id(tradeup_id)
     except ValueError:
