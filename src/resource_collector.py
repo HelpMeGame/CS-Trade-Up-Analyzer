@@ -56,11 +56,6 @@ MANUAL_SETS = [
     ["CSGO_set_anubis", "set_anubis"]
 ]
 
-MANUAL_RARITY_OVERRIDES = {
-    "[cu_usp_spitfire]weapon_usps_silencer": RarityToInt.Legendary,
-    "[hy_blam_simple]weapon_awp": RarityToInt.Legendary
-}
-
 
 def gather_file_data(items_game_path: str, csgo_english_path: str) -> [dict, dict]:
     # open and read items_game.txt file
@@ -101,7 +96,9 @@ def collect_crates(item_json: dict, translation_json: dict) -> None:
                 name = translation_json['tokens'][item_id]
 
                 # get crate set id
-                set_id = obj['tags']['itemset']['tag_value']
+                set_val = obj['attributes']['set supply crate series']['value']
+
+                set_id = item_json['revolving_loot_lists'][set_val]
 
                 # add crate to DB
                 db_handler.add_crate(item_id, name, set_id)
@@ -186,30 +183,26 @@ def collect_skins(item_json: dict, translation_json: dict) -> None:
 
 
 def collect_rarities(item_json: dict):
-    for set_id in item_json['client_loot_lists'].keys():
-        set_data = set_id.split("_")
-
-        rarity = get_rarity(set_data.pop(-1))
-
-        if rarity is None:
-            continue
-
-        set_name = "_".join(set_data)
-
+    loot_lists = item_json['client_loot_lists']
+    for crate in db_handler.get_all_crates():
         try:
-            db_handler.get_crate_from_set(set_name.replace("crate", "set").lower())
-        except TypeError:
+            rarities = loot_lists[crate.set_id]
+        except KeyError:
             continue
 
-        for skin in item_json['client_loot_lists'][set_id].keys():
-            db_handler.update_skin_rarity(skin, rarity.value)
+        for key in rarities.keys():
+            try:
+                rarity = get_rarity(key.split("_")[-1]).value
+            except AttributeError:
+                continue
 
+            for skin in loot_lists[key].keys():
+                db_handler.update_skin_rarity(skin, rarity)
+
+    # handle remaining skins
     for skin in db_handler.get_skins_by_rarity(-1):
-        if skin.skin_id in MANUAL_RARITY_OVERRIDES:
-            rarity = MANUAL_RARITY_OVERRIDES[skin.skin_id]
-        else:
-            rarity = get_rarity(item_json['paint_kits_rarity'][skin.skin_tag])
-        db_handler.update_skin_rarity(skin.skin_id, rarity.value)
+        rarity = get_rarity(item_json['paint_kits_rarity'][skin.skin_tag]).value
+        db_handler.update_skin_rarity(skin.skin_id, rarity)
 
     for case in db_handler.get_all_crates():
         counts = [0 for i in range(0, 6)]
