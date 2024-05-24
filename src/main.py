@@ -28,7 +28,7 @@ import tradeup_generator
 import resource_collector
 
 WORKING_PATH = pathlib.Path(os.curdir)
-SHOULD_WIPE = True
+SHOULD_WIPE = False
 THREAD_COUNT = 32
 
 """
@@ -84,7 +84,7 @@ def main():
 
         # generate all possible trade-ups
         print("Generating trade-ups...")
-        # tradeup_generator.generate_tradeups(db_creds, THREAD_COUNT)
+        tradeup_generator.generate_tradeups(db_creds, THREAD_COUNT)
 
     if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.bot-creds")):
         print("Starting bot...")

@@ -33,8 +33,8 @@ def establish_db(creds, wipe_db=False):
     if wipe_db:
         cursor.execute("DROP TABLE IF EXISTS crates CASCADE")
         cursor.execute("DROP TABLE IF EXISTS skins CASCADE")
-        # cursor.execute("DROP TABLE IF EXISTS tradeups CASCADE")
-        # cursor.execute("DROP TABLE IF EXISTS tradeup_skins CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS tradeups CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS tradeup_skins CASCADE")
         # cursor.execute("DROP TABLE IF EXISTS cheapest CASCADE")
         # cursor.execute("DROP TABLE IF EXISTS prices CASCADE")
 

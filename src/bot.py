@@ -117,6 +117,9 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
     if skin_name is not None:
         skin_name = db_handler.get_skins_by_search_name(skin_name.lower())[0]
 
+    if sort_by == "profit":
+        sort_by = "profit_10"
+
     tradeups, total_count = await db_handler.get_tradeups_by_criteria(rarity, wear, weapon, skin_name, min_wear,
                                                                       max_wear, lower_price, upper_price, roi_10_min,
                                                                       roi_10_max, offset, sort_by)
