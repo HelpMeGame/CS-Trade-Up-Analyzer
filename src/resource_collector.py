@@ -14,47 +14,7 @@ Collects the resources required for trade up generation
 import re
 import json
 import db_handler
-from models.weapon_classifiers import str_to_weapon, get_rarity, RarityToInt
-
-# the following is a manually defined list of sets
-# that aren't "crates" but can still have trade ups.
-MANUAL_SETS = [
-    ["CSGO_set_dust", "set_dust"],
-    ["CSGO_set_aztec", "set_aztec"],
-    ["CSGO_set_vertigo", "set_vertigo"],
-    ["CSGO_set_inferno", "set_inferno"],
-    ["CSGO_set_militia", "set_militia"],
-    ["CSGO_set_nuke", "set_nuke"],
-    ["CSGO_set_office", "set_office"],
-    ["CSGO_set_assault", "set_assault"],
-    ["CSGO_set_dust_2", "set_dust_2"],
-    ["CSGO_set_train", "set_train"],
-    ["CSGO_set_mirage", "set_mirage"],
-    ["CSGO_set_italy", "set_italy"],
-    ["CSGO_set_lake", "set_lake"],
-    ["CSGO_set_safehouse", "set_safehouse"],
-    ["CSGO_set_bank", "set_bank"],
-    ["CSGO_set_overpass", "set_overpass"],
-    ["CSGO_set_cobblestone", "set_cobblestone"],
-    ["CSGO_set_baggage", "set_baggage"],
-    ["CSGO_set_cache", "set_cache"],
-    ["CSGO_set_gods_and_monsters", "set_gods_and_monsters"],
-    ["CSGO_set_chopshop", 'set_chopshop'],
-    ["CSGO_set_kimono", "set_kimono"],
-    ["CSGO_set_nuke_2", "set_nuke_2"],
-    ["CSGO_set_inferno_2", "set_inferno_2"],
-    ["CSGO_set_xraymachine", "set_xraymachine"],
-    ["CSGO_set_blacksite", "set_blacksite"],
-    ["CSGO_set_stmarc", "set_stmarc"],
-    ["CSGO_set_canals", "set_canals"],
-    ["CSGO_set_norse", "set_norse"],
-    ["CSGO_set_dust_2_2021", "set_dust_2_2021"],
-    ["CSGO_set_mirage_2021", "set_mirage_2021"],
-    ["CSGO_set_op10_ancient", "set_op10_ancient"],
-    ["CSGO_set_train_2021", "set_train_2021"],
-    ["CSGO_set_vertigo_2021", "set_vertigo_2021"],
-    ["CSGO_set_anubis", "set_anubis"]
-]
+from models.weapon_classifiers import str_to_weapon, get_rarity
 
 
 def gather_file_data(items_game_path: str, csgo_english_path: str) -> [dict, dict]:
@@ -78,34 +38,51 @@ def collect_crates(item_json: dict, translation_json: dict) -> None:
     :return: Nothing. All discovered crates are added to the database.
     """
 
-    for crate_id, set_id in MANUAL_SETS:
-        name = translation_json['tokens'][crate_id.lower()]
-        db_handler.add_crate(crate_id.lower(), name, set_id, set_id)
-
     for item in item_json['items']:
         # get object
         obj = item_json['items'][item]
 
         # check if item is a weapon case
         try:
-            if obj['prefab'] == "weapon_case":
-                item_id = obj['item_name'].lower().replace("#", "")
+            if obj['prefab'] == "weapon_case" or obj['prefab'] == "weapon_case_base" or obj['prefab'] == "weapon_case_souvenirpkg":
+                if obj['prefab'] == "weapon_case_souvenirpkg":
+                    item_id = obj['tags']['itemset']['tag_text'].lower().replace("#", "")
+                else:
+                    item_id = obj['item_name'].lower().replace("#", "")
 
-                # get crate name
+                # get crate/set name
                 name = translation_json['tokens'][item_id]
 
-                # get crate ID
-                loot_table_index = obj['attributes']['set supply crate series']['value']
+                if obj['prefab'] == "weapon_case_base":
+                    # get loot table ID from loot list
+                    loot_table_id = obj['loot_list_name']
+                else:
+                    # get loot table ID from supply crate series value
+                    loot_table_index = obj['attributes']['set supply crate series']['value']
+                    loot_table_id = item_json['revolving_loot_lists'][loot_table_index]
 
-                loot_table_id = item_json['revolving_loot_lists'][loot_table_index]
+                    if obj['prefab'] == "weapon_case_souvenirpkg":
+                        loot_table_id = list(item_json['client_loot_lists'][loot_table_id].keys())[0]
 
                 # get crate set id
                 set_id = obj['tags']['itemset']['tag_value']
 
-                # add crate to DB
-                db_handler.add_crate(item_id, name, set_id, loot_table_id)
+                if db_handler.get_crate_from_set(set_id) is None:
+                    # add crate to DB
+                    db_handler.add_crate(item_id, name, set_id, loot_table_id)
         except KeyError:
             pass
+
+    for item in item_json['quest_reward_loot_lists']:
+        set_id = item_json['quest_reward_loot_lists'][item]
+
+        if db_handler.get_crate_from_set(set_id) is not None:
+            continue
+
+        item_id = item_json['item_sets'][set_id]['name'].replace("#", "").lower()
+        name = translation_json['tokens'][item_id]
+
+        db_handler.add_crate(item_id, name, set_id, set_id)
 
     db_handler.WORKING_DB.commit()
 
@@ -154,9 +131,9 @@ def collect_skins(item_json: dict, translation_json: dict) -> None:
         set_id = set_id.lower().replace("#", "")
 
         # attempt to get the case from the set_id
-        try:
-            case = db_handler.get_crate_from_set(set_id)
-        except TypeError:
+        case = db_handler.get_crate_from_set(set_id)
+
+        if case is None:
             continue
 
         # loop through items and add them to DB

@@ -400,7 +400,7 @@ async def get_case(ctx: discord.ApplicationContext, case_id: discord.Option(int)
         await ctx.send_response("Case could not be found.")
         return
 
-    desc = f"Case ID: `{case.crate_id}`\nSet ID: `{case.set_id}`\n\nSkins:"
+    desc = f"Case ID: `{case.crate_id}`\nSet ID: `{case.set_id}`\nLoot List ID: `{case.loot_table_id}`\n\nSkins:"
 
     for rarity in range(0, 6):
         if case.rarity_counts[rarity] > 0:

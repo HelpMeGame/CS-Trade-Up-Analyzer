@@ -191,6 +191,9 @@ def get_crate_from_set(set_id: str):
 
     cursor.close()
 
+    if crate is None:
+        return None
+
     return Crate(crate)
 
 
