@@ -44,6 +44,7 @@ def establish_db(creds, wipe_db=False):
         crate_id TEXT,
         crate_name TEXT,
         set_id TEXT,
+        loot_table_id TEXT,
         rarity_0_count INTEGER,
         rarity_1_count INTEGER,
         rarity_2_count INTEGER,
@@ -142,11 +143,11 @@ def connect_to_db(creds):
     return db
 
 
-def add_crate(crate_id, crate_name, set_id, commit=False):
+def add_crate(crate_id, crate_name, set_id, loot_table_id, commit=False):
     cursor = WORKING_DB.cursor()
 
-    cursor.execute(f"INSERT INTO crates (crate_name, crate_id, set_id) VALUES (%s, %s, %s);",
-                   (crate_name, crate_id, set_id))
+    cursor.execute(f"INSERT INTO crates (crate_name, crate_id, set_id, loot_table_id) VALUES (%s, %s, %s, %s);",
+                   (crate_name, crate_id, set_id, loot_table_id))
 
     cursor.close()
 

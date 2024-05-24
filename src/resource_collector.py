@@ -80,7 +80,7 @@ def collect_crates(item_json: dict, translation_json: dict) -> None:
 
     for crate_id, set_id in MANUAL_SETS:
         name = translation_json['tokens'][crate_id.lower()]
-        db_handler.add_crate(crate_id.lower(), name, set_id)
+        db_handler.add_crate(crate_id.lower(), name, set_id, set_id)
 
     for item in item_json['items']:
         # get object
@@ -89,19 +89,21 @@ def collect_crates(item_json: dict, translation_json: dict) -> None:
         # check if item is a weapon case
         try:
             if obj['prefab'] == "weapon_case":
-                # get crate ID
                 item_id = obj['item_name'].lower().replace("#", "")
 
                 # get crate name
                 name = translation_json['tokens'][item_id]
 
-                # get crate set id
-                set_val = obj['attributes']['set supply crate series']['value']
+                # get crate ID
+                loot_table_index = obj['attributes']['set supply crate series']['value']
 
-                set_id = item_json['revolving_loot_lists'][set_val]
+                loot_table_id = item_json['revolving_loot_lists'][loot_table_index]
+
+                # get crate set id
+                set_id = obj['tags']['itemset']['tag_value']
 
                 # add crate to DB
-                db_handler.add_crate(item_id, name, set_id)
+                db_handler.add_crate(item_id, name, set_id, loot_table_id)
         except KeyError:
             pass
 
@@ -186,7 +188,7 @@ def collect_rarities(item_json: dict):
     loot_lists = item_json['client_loot_lists']
     for crate in db_handler.get_all_crates():
         try:
-            rarities = loot_lists[crate.set_id]
+            rarities = loot_lists[crate.loot_table_id]
         except KeyError:
             continue
 
