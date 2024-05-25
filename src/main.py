@@ -64,15 +64,15 @@ def main():
     if SHOULD_WIPE:
         # collect crate information
         print("Collecting crate info...")
-        resource_collector.collect_crates(items_game, translations)
+        # resource_collector.collect_crates(items_game, translations)
 
         # collect skin information
         print("Collecting skin info...")
-        resource_collector.collect_skins(items_game, translations)
+        # resource_collector.collect_skins(items_game, translations)
 
         # collect rarities
         print("Collecting skin rarities...")
-        resource_collector.collect_rarities(items_game)
+        # resource_collector.collect_rarities(items_game)
 
         # gather prices
         print("Gathering market prices...")

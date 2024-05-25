@@ -31,8 +31,8 @@ def establish_db(creds, wipe_db=False):
     cursor = db.cursor()
 
     if wipe_db:
-        cursor.execute("DROP TABLE IF EXISTS crates CASCADE")
-        cursor.execute("DROP TABLE IF EXISTS skins CASCADE")
+        # cursor.execute("DROP TABLE IF EXISTS crates CASCADE")
+        # cursor.execute("DROP TABLE IF EXISTS skins CASCADE")
         cursor.execute("DROP TABLE IF EXISTS tradeups CASCADE")
         cursor.execute("DROP TABLE IF EXISTS tradeup_skins CASCADE")
         # cursor.execute("DROP TABLE IF EXISTS cheapest CASCADE")
@@ -275,7 +275,7 @@ def get_skins_by_rarity(rarity: int):
 def get_skin_by_name(name: str):
     cursor = WORKING_DB.cursor()
 
-    cursor.execute("SELECT * FROM skins WHERE skin_name = %s", (name))
+    cursor.execute("SELECT * FROM skins WHERE skin_name = %s", (name,))
 
     data = cursor.fetchone()
 

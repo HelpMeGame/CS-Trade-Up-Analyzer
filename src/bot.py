@@ -145,7 +145,7 @@ async def format_tradeups(tradeups):
                 tradeup.skin_2_price * (10 - tradeup.skin_1_count))
 
         if goal_skin_price is not None:
-            possible_profit = f"`${round(goal_skin_price[0][0] - input_price, 2):,.2f}`"
+            possible_profit = f"`${round((goal_skin_price[0][0] * 0.95) - input_price, 2):,.2f}`"
         else:
             possible_profit = "`N/A`"
 
@@ -338,7 +338,7 @@ async def format_skin_profit(skin: Skin, average: float, input_price: float, cha
 
     # set price data
     if prices is not None:
-        price = float(prices[0][0])
+        price = float(prices[0][0]) * 0.95
         profit = price - input_price
         desc += f"\n - Skin price: `${price:,.2f}`"
         desc += f"\n - Profit: `${profit:,.2f}`"

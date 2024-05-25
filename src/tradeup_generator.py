@@ -211,7 +211,7 @@ def simulate(input_costs: float,
 
         # attempt to get price of the generated skin
         try:
-            price = db_handler.get_prices(possibility.skin_id, estimated_wear_value, db)[0][0]
+            price = db_handler.get_prices(possibility.skin_id, estimated_wear_value, db)[0][0] * 0.95
         except TypeError:
             # if we can't get the price, grab the cheapest one at it's rarity and crate
             possible_data = db_handler.get_cheapest_by_crate_rarity_and_wear(possibility.case_id, possibility.rarity,
@@ -221,7 +221,7 @@ def simulate(input_costs: float,
             if possible_data is None or len(possible_data) < 2:
                 price = 0
             else:
-                price = possible_data[1]
+                price = possible_data[1] * 0.95
 
             # mark the price warning True since the results may be inaccurate.
             price_warning = True
