@@ -29,7 +29,7 @@ import resource_collector
 
 WORKING_PATH = pathlib.Path(os.curdir)
 SHOULD_WIPE = False
-THREAD_COUNT = 32
+THREAD_COUNT = 64
 
 """
 Rarity calculation system needs to be checked

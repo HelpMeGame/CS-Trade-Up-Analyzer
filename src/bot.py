@@ -185,10 +185,10 @@ async def get_trade_up(ctx: discord.ApplicationContext, tradeup_id: discord.Opti
 
     embed.set_footer(text=f"Trade Up ID: {tradeup.internal_id}")
 
-    inputs = f"- {tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_1.weapon_type]} \"{tradeup.skin_1.skin_name}\"\n\t - Max Wear: `{tradeup.skin_1_max_wear}`\n - Price: `${tradeup.skin_1_price:,.2f}` each\n - *Internal ID: `{tradeup.skin_1.internal_id}`*"
+    inputs = f"- {tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_1.weapon_type]} \"{tradeup.skin_1.skin_name}\"\n\t - Max Wear: `{tradeup.skin_1_max_wear}` - {get_valid_wears(0, tradeup.skin_1_max_wear)[-1].value}\n - Price: `${tradeup.skin_1_price:,.2f}` each\n - *Internal ID: `{tradeup.skin_1.internal_id}`*"
 
     if tradeup.skin_2 is not None:
-        inputs += f"\n- {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\"\n\t - Max Wear: `{tradeup.skin_2_max_wear}`\n - Price: `${tradeup.skin_2_price:,.2f}` each\n - *Internal ID: `{tradeup.skin_2.internal_id}`*"
+        inputs += f"\n- {10 - tradeup.skin_1_count}x {WeaponIntToStr[tradeup.skin_2.weapon_type]} \"{tradeup.skin_2.skin_name}\"\n\t - Max Wear: `{tradeup.skin_2_max_wear}` - {get_valid_wears(0, tradeup.skin_2_max_wear)[-1].value}\n - Price: `${tradeup.skin_2_price:,.2f}` each\n - *Internal ID: `{tradeup.skin_2.internal_id}`*"
 
     embed.add_field(name=f"Inputs (`${input_price:,.2f}` total)", value=inputs, inline=False)
 

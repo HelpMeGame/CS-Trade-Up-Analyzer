@@ -281,6 +281,10 @@ def generate_tradeup(*args):
                     else:
                         decrement_wear = True
 
+                    # skip over "border" values that are very practically impossible to find
+                    if max_profitable_wear == 0.07 or max_profitable_wear == 0.15 or max_profitable_wear == 0.38 or max_profitable_wear == 0.45:
+                        max_profitable_wear -= round(max_profitable_wear - 0.01, 2)
+
                     # get list of valid wears
                     max_wear = get_valid_wears(0, max_profitable_wear, True)
 
@@ -340,6 +344,9 @@ def generate_tradeup(*args):
                         max_alternative_wear = 1
 
                         while max_alternative_wear > 0:
+                            # skip over more "border" values
+                            if max_alternative_wear == 0.07 or max_alternative_wear == 0.15 or max_alternative_wear == 0.38 or max_alternative_wear == 0.45:
+                                max_alternative_wear -= round(max_alternative_wear - 0.01, 2)
 
                             # get a rough average wear rating prediction
                             average = ((
