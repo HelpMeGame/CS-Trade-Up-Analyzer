@@ -13,10 +13,11 @@ Generator algorithms for determining best possible trade ups for a given skin
 
 import random
 import threading
-import db_handler
+from src import db_handler
 from src.models.skin import Skin
 from src.models.weapon_classifiers import get_valid_wears, get_wear_margin
 from src.models.simulation_possibility import SimulationPossibility
+
 
 def generate_tradeups(db_creds, thread_count):
     for i in range(1, 6):
@@ -392,7 +393,8 @@ def generate_tradeup(*args):
 
                         # call the filler skin algorithm to get our data
                         filler_skin_data = find_best_fit(goal_skin.crate_id, remaining_value, remaining_count,
-                                                         get_valid_wears(0, max_alternative_wear, True)[-1].value, goal_skin.rarity - 1, db)
+                                                         get_valid_wears(0, max_alternative_wear, True)[-1].value,
+                                                         goal_skin.rarity - 1, db)
 
                         # no valid skin found! skip this combinations.
                         if filler_skin_data[0] is None:

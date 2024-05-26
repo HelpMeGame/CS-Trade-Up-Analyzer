@@ -1,8 +1,7 @@
 import os
 import pathlib
 import discord
-import src.db_handler as db_handler
-import src.tradeup_generator as tradeup_generator
+from src import db_handler, tradeup_generator
 from discord import Colour
 from src.models.skin import Skin
 from src.models.simulation_possibility import SimulationPossibility

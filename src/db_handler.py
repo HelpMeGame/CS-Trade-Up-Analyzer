@@ -15,8 +15,8 @@ import json
 import sqlite3
 import psycopg2
 from src.models.skin import Skin
-from models.crate import Crate
-from models.tradeup import TradeUp
+from src.models.crate import Crate
+from src.models.tradeup import TradeUp
 
 WORKING_DB: sqlite3.Connection = None
 
