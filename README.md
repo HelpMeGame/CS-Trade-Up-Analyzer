@@ -34,7 +34,7 @@ $$\text{Total Tickets} = (\text{Skin 1 Count * Skin 1 Case Possibilities}) + (\t
 
 In order to get a better understanding of this formula, consider the following scenario, in which two skins are being used in a trade up. Skin 1 is being used 3 times in the trade up, and can result in 2 skins. Skin 2 is being used 7 times in the trade up, and can result in 4 skins. The formula would look like the following:
 
-$$\text{Total Tickets} = (3*2)+(7*4)$$
+$$\text{Total Tickets} = (3 * 2) + (7 * 4)$$
 
 In this instance, `Total Tickets` would be equal to `34`. Now say we wanted to calculate the chance of getting a specific skin out of the trade up. In order to do so, we'd divide the total tickets by the number of that skin we put in. Referencing the earlier example, say we want to figure out the chance of getting Skin A from Skin 1's case. The formula would appear as the following:
 
