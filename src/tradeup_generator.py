@@ -19,7 +19,7 @@ from src.models.weapon_classifiers import get_valid_wears, get_wear_margin
 from src.models.simulation_possibility import SimulationPossibility
 
 
-def generate_tradeups(db_creds, thread_count):
+def start_generator_threads(db_creds, thread_count):
     for i in range(1, 6):
 
         # get skins of this rarity
@@ -54,7 +54,7 @@ def generate_tradeups(db_creds, thread_count):
         # create & start threads
         for i in range(thread_count):
             # create a thread to work on a skin
-            threads.append(threading.Thread(target=generate_tradeup, args=[db_creds, divided_list[i]]))
+            threads.append(threading.Thread(target=generate_tradeups, args=[db_creds, divided_list[i]]))
 
         # start threads
         for thread in threads:
@@ -254,7 +254,7 @@ def estimate_wear(skin: Skin | SimulationPossibility, average_wear: float):
     return estimate
 
 
-def generate_tradeup(*args):
+def generate_tradeups(*args):
     db = db_handler.connect_to_db(args[0])
 
     skins = args[1]

@@ -21,13 +21,10 @@ Trade up generation should be based on buy orders, not sell orders
 
 import os
 import pathlib
-import db_handler
-import market_handler
-import tradeup_generator
-import resource_collector
+from src import db_handler, market_handler, tradeup_generator, resource_collector
 
 WORKING_PATH = pathlib.Path(os.curdir)
-SHOULD_WIPE = False
+SHOULD_WIPE = True
 THREAD_COUNT = 64
 
 """
@@ -83,7 +80,7 @@ def main():
 
         # generate all possible trade-ups
         print("Generating trade-ups...")
-        tradeup_generator.generate_tradeups(db_creds, THREAD_COUNT)
+        tradeup_generator.start_generator_threads(db_creds, THREAD_COUNT)
 
 
 if __name__ == "__main__":

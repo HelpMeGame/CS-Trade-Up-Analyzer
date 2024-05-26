@@ -12,13 +12,12 @@ Database operation handler for requests
 """
 
 import json
-import sqlite3
 import psycopg2
 from src.models.skin import Skin
 from src.models.crate import Crate
 from src.models.tradeup import TradeUp
 
-WORKING_DB: sqlite3.Connection = None
+WORKING_DB = None
 
 
 def establish_db(creds, wipe_db=False):
@@ -258,8 +257,11 @@ def get_all_skins():
     return skins
 
 
-def get_skins_by_rarity(rarity: int):
-    cursor = WORKING_DB.cursor()
+def get_skins_by_rarity(rarity: int, db=None):
+    if db is None:
+        db = WORKING_DB
+
+    cursor = db.cursor()
 
     cursor.execute("SELECT * FROM skins WHERE rarity = %s", (rarity,))
 
@@ -421,11 +423,39 @@ def get_buy_orders(skin_id: int, wear: int):
     return data
 
 
+def get_market_hash(skin_id: float, wear: int):
+    cursor = WORKING_DB.cursor()
+
+    cursor.execute("SELECT market_id FROM prices WHERE skin_id = %s AND wear_rating = %s", (skin_id, wear))
+
+    id = cursor.fetchone()
+
+    cursor.close()
+
+    if id is None:
+        return None
+    else:
+        return int(id[0])
+
+
+def update_price(market_hash: int, sell_orders: str, buy_orders: str, commit: bool=False):
+    cursor = WORKING_DB.cursor()
+
+    cursor.execute("UPDATE prices SET price_data=%s, buy_data=%s WHERE market_id = %s",
+                   (sell_orders, buy_orders, market_hash))
+
+    cursor.close()
+
+    if commit:
+        WORKING_DB.commit()
+
+
 def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, goal_rarity: int, goal_weapon: int, skin_1_count,
                 chance: float, roi_10: float,
                 roi_100: float, profit_10: float,
                 profit_100: float, price_warning: bool, skin_1_price: float, skin_2_price: float,
-                skin_1_max_wear: float, skin_2_max_wear: float, skin_1_margin: float, skin_2_margin: float, input_price: float,
+                skin_1_max_wear: float, skin_2_max_wear: float, skin_1_margin: float, skin_2_margin: float,
+                input_price: float,
                 commit: bool = False, db=None):
     if db is None:
         db = WORKING_DB
@@ -436,7 +466,8 @@ def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, goal_rarity
         "INSERT INTO tradeups (goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100, price_warning, skin_1_price, skin_2_price, skin_1_max_wear, skin_2_max_wear, skin_1_margin, skin_2_margin, input_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING internal_id",
         (
             goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10,
-            profit_100, price_warning, skin_1_price, skin_2_price, skin_1_max_wear, skin_2_max_wear, skin_1_margin, skin_2_margin, input_price))
+            profit_100, price_warning, skin_1_price, skin_2_price, skin_1_max_wear, skin_2_max_wear, skin_1_margin,
+            skin_2_margin, input_price))
 
     tradeup_id = cursor.fetchone()[0]
 
@@ -497,7 +528,8 @@ async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_nam
         "input_price >= %s AND input_price <= %s", "%s <= roi_10 AND %s >= roi_10",
         "(%s >= skin_1_margin AND %s >= skin_2_margin)"
     ]
-    values = [min_wear, max_wear, min_wear, max_wear, lower_bound, upper_bound, lower_roi, upper_roi, max_margin, max_margin]
+    values = [min_wear, max_wear, min_wear, max_wear, lower_bound, upper_bound, lower_roi, upper_roi, max_margin,
+              max_margin]
 
     if rarity is not None:
         criteria.append("goal_rarity = %s")

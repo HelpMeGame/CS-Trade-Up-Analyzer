@@ -109,24 +109,31 @@ def get_prices(steam_creds: tuple[str, str]) -> None:
         # create market hash name
         hash_name = f"{weapon} | {name.strip()} ({wear_int_enum_to_str_enum[wear].value})"
 
-        try:
-            del cookie_jar["Referer"]
-        except KeyError:
-            pass
+        # check if item has already been scraped (market hash exists)
+        market_id = db_handler.get_market_hash(skin_id, wear.value)
 
-        # grab HTML for page
-        try:
-            html = req.get(url=market_root + quote(hash_name), cookies=cookie_jar).content
-        except:
-            # sleep in case the request fails, attempts to let rate limits flow over
-            time.sleep(1800)
-            html = req.get(url=market_root + quote(hash_name), cookies=cookie_jar).content
+        foundID = False
 
+        if market_id is None:
+            try:
+                del cookie_jar["Referer"]
+            except KeyError:
+                pass
 
-        try:
+            # grab HTML for page
+            try:
+                html = req.get(url=market_root + quote(hash_name), cookies=cookie_jar).content
+            except:
+                # sleep in case the request fails, attempts to let rate limits flow over
+                time.sleep(1800)
+                html = req.get(url=market_root + quote(hash_name), cookies=cookie_jar).content
+
             # gather market ID
             market_id = int(market_id_finder.findall(html)[0])
+        else:
+            foundID = True
 
+        try:
             # set referer URL to avoid rate limits
             cookie_jar["Referer"] = market_root + quote(hash_name)
 
@@ -148,9 +155,12 @@ def get_prices(steam_creds: tuple[str, str]) -> None:
             market_id = -1
 
         # add the price to the database
-        db_handler.add_price(skin_id, wear.value, market_id, json.dumps(sell_orders), json.dumps(buy_orders), commit=True)
+        if not foundID:
+            db_handler.add_price(skin_id, wear.value, market_id, json.dumps(sell_orders), json.dumps(buy_orders), commit=True)
+        else:
+            db_handler.update_price(market_id, json.dumps(sell_orders), json.dumps(buy_orders), commit=True)
 
         # check if we are on the last skin or not
         if i + 1 != len(to_retrieve):
-            # sleep for 12-20 seconds to avoid rate limit
+            # sleep for 13-15 seconds to avoid rate limit
             time.sleep(random.randrange(13, 15))
