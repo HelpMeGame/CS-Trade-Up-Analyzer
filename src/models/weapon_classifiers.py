@@ -166,15 +166,14 @@ game_rarity_to_rarity = {
 }
 
 rarity_int_to_game_rarity = {
-    0: "Consumer",         # Consumer
-    1: "Industrial",       # Industrial
-    2: "Mil-Spec",         # Mil-Spec
-    3: "Restricted",       # Restricted
-    4: "Classified",       # Classified
-    5: "Covert",           # Covert
+    0: "Consumer",  # Consumer
+    1: "Industrial",  # Industrial
+    2: "Mil-Spec",  # Mil-Spec
+    3: "Restricted",  # Restricted
+    4: "Classified",  # Classified
+    5: "Covert",  # Covert
     6: "Exceedingly Rare"  # Exceedingly Rare
 }
-
 
 str_to_weapon = {
     "tec9": WeaponToInt.TEC9,
@@ -294,3 +293,26 @@ def get_valid_wears(min_wear: float, max_wear: float, as_int: bool = False) -> l
 
     return valid_wears
 
+
+def get_wear_margin(wear: float):
+    try:
+        # get highest possible wear rating for this float
+        wear_enum = get_valid_wears(0, wear)[0]
+    except IndexError:
+        return 0
+
+    # find "border" value, where wear passes into next rating
+    if wear_enum == WearsToStr.FACTORYNEW:
+        border = 0
+    elif wear_enum == WearsToStr.MINWEAR:
+        border = 0.07
+    elif wear_enum == WearsToStr.FIELDTESTED:
+        border = 0.15
+    elif wear_enum == WearsToStr.WELLWORN:
+        border = 0.38
+    elif wear_enum == WearsToStr.BATTLESCARRED:
+        border = 0.45
+    else:
+        border = 0
+
+    return wear - border

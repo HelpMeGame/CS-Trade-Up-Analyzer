@@ -85,6 +85,8 @@ def establish_db(creds, wipe_db=False):
         skin_2_price FLOAT,
         skin_1_max_wear FLOAT,
         skin_2_max_wear FLOAT,
+        skin_1_margin FLOAT,
+        skin_2_margin FLOAT,
         input_price FLOAT,
         FOREIGN KEY (goal_skin) REFERENCES skins(internal_id)
     );
@@ -423,7 +425,7 @@ def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, goal_rarity
                 chance: float, roi_10: float,
                 roi_100: float, profit_10: float,
                 profit_100: float, price_warning: bool, skin_1_price: float, skin_2_price: float,
-                skin_1_max_wear: float, skin_2_max_wear: float, input_price: float,
+                skin_1_max_wear: float, skin_2_max_wear: float, skin_1_margin: float, skin_2_margin: float, input_price: float,
                 commit: bool = False, db=None):
     if db is None:
         db = WORKING_DB
@@ -431,10 +433,10 @@ def add_tradeup(skin_ids: list[int], goal_skin: int, goal_wear: int, goal_rarity
     cursor = db.cursor()
 
     cursor.execute(
-        "INSERT INTO tradeups (goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100, price_warning, skin_1_price, skin_2_price, skin_1_max_wear, skin_2_max_wear, input_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING internal_id",
+        "INSERT INTO tradeups (goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10, profit_100, price_warning, skin_1_price, skin_2_price, skin_1_max_wear, skin_2_max_wear, skin_1_margin, skin_2_margin, input_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING internal_id",
         (
             goal_skin, goal_wear, goal_rarity, goal_weapon, skin_1_count, chance, roi_10, roi_100, profit_10,
-            profit_100, price_warning, skin_1_price, skin_2_price, skin_1_max_wear, skin_2_max_wear, input_price))
+            profit_100, price_warning, skin_1_price, skin_2_price, skin_1_max_wear, skin_2_max_wear, skin_1_margin, skin_2_margin, input_price))
 
     tradeup_id = cursor.fetchone()[0]
 

@@ -35,7 +35,10 @@ class TradeUp:
         self.skin_1_max_wear = tradeup_data[14]
         self.skin_2_max_wear = tradeup_data[15]
 
-        self.input_price = tradeup_data[16]
+        self.skin_1_margin = tradeup_data[16]
+        self.skin_2_margin = tradeup_data[17]
+
+        self.input_price = tradeup_data[18]
 
         self.skin_1 = skins[0]
 

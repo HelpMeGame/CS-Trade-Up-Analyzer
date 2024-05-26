@@ -15,7 +15,7 @@ import random
 import threading
 import db_handler
 from src.models.skin import Skin
-from src.models.weapon_classifiers import get_valid_wears
+from src.models.weapon_classifiers import get_valid_wears, get_wear_margin
 from src.models.simulation_possibility import SimulationPossibility
 
 def generate_tradeups(db_creds, thread_count):
@@ -478,6 +478,8 @@ def generate_tradeup(*args):
                         filler_price,
                         max_profitable_wear,
                         max_alternative_wear,
+                        get_wear_margin(max_profitable_wear),
+                        get_wear_margin(max_alternative_wear),
                         input_costs,
                         db=db
                     )
