@@ -297,7 +297,7 @@ def get_valid_wears(min_wear: float, max_wear: float, as_int: bool = False) -> l
 def get_wear_margin(wear: float):
     try:
         # get highest possible wear rating for this float
-        wear_enum = get_valid_wears(0, wear)[0]
+        wear_enum = get_valid_wears(0, wear)[-1]
     except IndexError:
         return 0
 
@@ -315,4 +315,4 @@ def get_wear_margin(wear: float):
     else:
         border = 0
 
-    return wear - border
+    return round(wear - border, 2)
