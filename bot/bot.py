@@ -6,7 +6,7 @@ from discord import Colour
 from src.models.skin import Skin
 from src.models.simulation_possibility import SimulationPossibility
 from src.models.weapon_classifiers import wear_int_to_enum, wear_int_enum_to_str_enum, WeaponIntToStr, WeaponToInt, \
-    game_rarity_to_rarity, str_to_wear, rarity_int_to_game_rarity, get_valid_wears
+    game_rarity_to_rarity, str_to_wear, rarity_int_to_game_rarity, get_valid_wears, get_wear_margin
 
 rarity_to_color = {
     0: Colour.light_grey(),
@@ -428,6 +428,22 @@ async def get_case(ctx: discord.ApplicationContext, case_id: discord.Option(int)
     )
 
     embed.set_footer(text=f"Internal ID: {case.internal_id}")
+
+    await ctx.send_response(embed=embed)
+
+
+@bot.slash_command(description="Get some status information about the bot")
+async def status(ctx: discord.ApplicationContext):
+    await ctx.send_response("Command is still in development. Please try again later.")
+    return
+
+    desc = "Time since last price update:\n\nBot uptime:\nBot started:"
+
+    embed = discord.Embed(
+        title="Bot Status",
+        description="",
+        colour=discord.Colour.random()
+    )
 
     await ctx.send_response(embed=embed)
 
