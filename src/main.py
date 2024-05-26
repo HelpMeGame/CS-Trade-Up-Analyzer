@@ -20,7 +20,6 @@ Trade up generation should be based on buy orders, not sell orders
 """
 
 import os
-import bot
 import pathlib
 import db_handler
 import market_handler
@@ -85,14 +84,6 @@ def main():
         # generate all possible trade-ups
         print("Generating trade-ups...")
         tradeup_generator.generate_tradeups(db_creds, THREAD_COUNT)
-
-    if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.bot-creds")):
-        print("Starting bot...")
-        with open(os.path.join(WORKING_PATH.absolute(), "data/.bot-creds"), "r") as f:
-            token = f.read()
-            f.close()
-
-        bot.start_bot(token.strip())
 
 
 if __name__ == "__main__":

@@ -491,11 +491,13 @@ def get_cheapest_by_crate_rarity_and_wear(crate_id: int, rarity: int, wear: int,
 
 async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_name: str, min_wear: float,
                                    max_wear: float, lower_bound: float, upper_bound: float, lower_roi: float,
-                                   upper_roi: float, offset: int, sort_by: str):
+                                   upper_roi: float, max_margin: float, offset: int, sort_by: str):
     criteria = [
         "((%s <= skin_1_max_wear AND %s >= skin_1_max_wear) AND (%s <= skin_2_max_wear AND %s >= skin_2_max_wear))",
-        "input_price >= %s AND input_price <= %s", "%s <= roi_10 AND %s >= roi_10"]
-    values = [min_wear, max_wear, min_wear, max_wear, lower_bound, upper_bound, lower_roi, upper_roi]
+        "input_price >= %s AND input_price <= %s", "%s <= roi_10 AND %s >= roi_10",
+        "(%s >= skin_1_margin AND %s >= skin_2_margin)"
+    ]
+    values = [min_wear, max_wear, min_wear, max_wear, lower_bound, upper_bound, lower_roi, upper_roi, max_margin, max_margin]
 
     if rarity is not None:
         criteria.append("goal_rarity = %s")

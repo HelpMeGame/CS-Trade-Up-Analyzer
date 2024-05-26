@@ -1,10 +1,12 @@
+import os
+import pathlib
 import discord
-import db_handler
-import tradeup_generator
+import src.db_handler as db_handler
+import src.tradeup_generator as tradeup_generator
 from discord import Colour
-from models.skin import Skin
-from models.simulation_possibility import SimulationPossibility
-from models.weapon_classifiers import wear_int_to_enum, wear_int_enum_to_str_enum, WeaponIntToStr, WeaponToInt, \
+from src.models.skin import Skin
+from src.models.simulation_possibility import SimulationPossibility
+from src.models.weapon_classifiers import wear_int_to_enum, wear_int_enum_to_str_enum, WeaponIntToStr, WeaponToInt, \
     game_rarity_to_rarity, str_to_wear, rarity_int_to_game_rarity, get_valid_wears
 
 rarity_to_color = {
@@ -18,8 +20,9 @@ rarity_to_color = {
 }
 
 intents = discord.Intents.default()
-
 bot = discord.Bot(intents=intents)
+
+WORKING_PATH = pathlib.Path(os.curdir)
 
 
 @bot.event
@@ -75,6 +78,9 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
                          upper_price: discord.Option(float, description="Lower price bound", required=False),
                          roi_10_min: discord.Option(float, description="Lower ROI bound", required=False),
                          roi_10_max: discord.Option(float, description="Upper ROI bound", required=False),
+                         max_margin: discord.Option(discord.SlashCommandOptionType.number,
+                                                    description="The maximum distance away from the next lowest level a wear rating can be",
+                                                    required=False, min_value=0, max_value=1, default=1),
                          offset: discord.Option(int,
                                                 description="How many results to offset by. 1 offset = 10 results.",
                                                 required=False, default=0),
@@ -122,7 +128,7 @@ async def list_trade_ups(ctx: discord.ApplicationContext,
 
     tradeups, total_count = await db_handler.get_tradeups_by_criteria(rarity, wear, weapon, skin_name, min_wear,
                                                                       max_wear, lower_price, upper_price, roi_10_min,
-                                                                      roi_10_max, offset, sort_by)
+                                                                      roi_10_max, max_margin, offset, sort_by)
 
     if tradeups is None:
         await ctx.send_response("Please add a filter.")
@@ -426,5 +432,30 @@ async def get_case(ctx: discord.ApplicationContext, case_id: discord.Option(int)
 
     await ctx.send_response(embed=embed)
 
-def start_bot(token: str):
+
+def main():
+    # get database creds
+    if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.db-creds")):
+        with open(os.path.join(WORKING_PATH.absolute(), "data/.db-creds"), "r") as f:
+            db_creds = tuple(f.readlines())
+            f.close()
+    else:
+        db_creds = ("", "", "", "", "")
+
+    # establish connection to database
+    print("Establishing connection to database...")
+    db_handler.establish_db(db_creds)
+
+    # start the bot
+    if os.path.exists(os.path.join(WORKING_PATH.absolute(), "data/.bot-creds")):
+        print("Starting bot...")
+        with open(os.path.join(WORKING_PATH.absolute(), "data/.bot-creds"), "r") as f:
+            token = f.read()
+            f.close()
+
+    # run the bot
     bot.run(token)
+
+
+if __name__ == "__main__":
+    main()
