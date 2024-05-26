@@ -1,6 +1,6 @@
 # Counter Strike Trade Up Analyzer
 
-An algoirthm that uses the Steam Community Market to gather price data and then analyze them to find the most profitable possible combinations for trade ups.
+An algorithm that uses the Steam Community Market to gather price data and then analyze them to find the most profitable possible combinations for trade ups.
 
 ---
 
@@ -32,7 +32,7 @@ The first feature is that of success chance. The more skins you add from differe
 
 `total_tickets = (Skin 1 Count * Skin 1 Case Possibilities) + (Skin 2 Count * Skin 2 Case Possibilities)`
 
-In order to get a better understanding of this forumla, consider the following scenario, in which two skins are being used in a trade up. Skin 1 is being used 3 times in the trade up, and can result in 2 skins. Skin 2 is being used 7 times in the trade up, and can result in 4 skins. The formula would look like the following:
+In order to get a better understanding of this formula, consider the following scenario, in which two skins are being used in a trade up. Skin 1 is being used 3 times in the trade up, and can result in 2 skins. Skin 2 is being used 7 times in the trade up, and can result in 4 skins. The formula would look like the following:
 
 `total_tickets = (3 * 2) + (7 * 4)`
 
@@ -40,7 +40,7 @@ In this instance, `total_tickets` would be equal to `34`. Now say we wanted to c
 
 `chance = 3 / 34`
 
-Our chance to get Skin A from this trade up would then be `0.0882`, or about `9%`. With this concept in mind, we can move on to the next and equally as important feature of trade up prediction.
+Our chance to get Skin A from this trade up would then be `0.0882`, or about `9%`. With this concept in mind, we can move on to the next and equally important feature of trade up prediction.
 
 When dealing with predicting the resulting skin's wear rating, we need to take into account the wear rating of all input skins, and some information from the resulting skin as well. This means that there will *not* be a set wear rating outcome for all skins involved in a trade up process, and two skins from the same crate may end up with differing results.
 
@@ -67,22 +67,22 @@ After the files have been converted to JSON, another parser looks through the `i
 Once crates and collections have been gathered, the skin data for each available skin in the game is added to the database. This is all information used later during trade up generation.
 
 ### Market Price Collection
-By utilizing the open-ended Steam URLs availbile to the average user, Steam can be systematically scraped for data relating to skins. Though a bit of a time-consuming and tedious process, this is a critical part in trade up generation. Price information allows the algorithm to identify the cheapest item from a set, cutting generation time to fractional amounts.
+By utilizing the open-ended Steam URLs available to the average user, Steam can be systematically scraped for data relating to skins. Though a bit of a time-consuming and tedious process, this is a critical part in trade up generation. Price information allows the algorithm to identify the cheapest item from a set, cutting generation time to fractional amounts.
 
 To gather information on a skin, there are three steps:
  - First, a "hash" name is generated for a skin. This typically includes simple information, such as what weapon the skin belongs to, the name of the skin, and it's wear rating. For example, a SSG-08 Dragonfire Factory New would be formatted as `SSG-08 Dragonfire | Factory New`
  - Second, the hash name is used in conjunction with [this](https://steamcommunity.com/market/listings/730/) base URL, allowing the script to fetch the market ID of the skins.
  - Third and finally, the market ID is used with [this](https://steamcommunity.com/market/itemordershistogram?country=US&language=english&currency=1&item_nameid=) URL to gather the list of current buy and sell orders for a skin.
 
-Once gathered, the information is then systematically parsed by crate. The cheapest skin in any teir of rarity for a crate is identified and recorded, allowing for future use in the trade up generation step.
+Once gathered, the information is then systematically parsed by crate. The cheapest skin in any tier of rarity for a crate is identified and recorded, allowing for future use in the trade up generation step.
 
 ## Trade Up Generation
 The final and second-most complex step is the generation of valid trade ups. Due to the nature of the algorithm, a large chunk of this process is trial-and-error brute forcing. To understand how this section works though, a deeper understanding of trade ups is required.
 
-In any given instance, a trade up consists of 10 skins of the same rarity. In the worst case scenario, that means 372 skins (Mil-Spec rarity) to potentially combine. Now by addressing each individual trade up, this process would take 372<sup>10</sup> comparisons. That's a lot of time.
+In any given instance, a trade up consists of 10 skins of the same rarity. In the worst case scenario, that means 372 skins (from the Mil-Spec rarity) to potentially combine. Now by addressing each individual trade up, this process would take 372<sup>10</sup> comparisons. That's a lot of time.
 
-However, by using a few clever tricks, the process can be sped up significantly. In particular, only ever using 2 skins in a trade up, increasing the chance of success. In addition, only the cheapst skin of a crate's rarity teir needs to be analyzed, as all skins above that price will have no further effect other than an increased base price.
+However, by using a few clever tricks, the process can be sped up significantly. In particular, only ever using 2 skins in a trade up, increasing the chance of success. In addition, only the cheapest skin of a crate's rarity tier needs to be analyzed, as all skins above that price will have no further effect other than an increased base price. This significantly reduces the total number of comparisons to a much more manageable 372<sup> 2</sip> 
 
-In order to put these ideas into effect, the trade up generator starts at the highest possible wear for a target skin, slowly decreasing until it reaches a point where the resuling skin (using the expected wear formula) is profitable. It then attempts to combine the trade up with filler skins, prioritizing cheapest price and highest chance of success.
+In order to put these ideas into effect, the trade up generator starts at the highest possible wear for a target skin, slowly decreasing until it reaches a point where the resulting skin (using the expected wear formula) is profitable. It then attempts to combine the trade up with filler skins, prioritizing the cheapest price and highest chance of success.
 
 Due to the basic nature of this process still being brute force, it can take a considerable amount of time. One employed method to reduce this time is by using threading, and by default the work load of the program is split over 64 threads, significantly reducing the processing time.
