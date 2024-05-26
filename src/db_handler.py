@@ -20,7 +20,7 @@ from src.models.tradeup import TradeUp
 WORKING_DB = None
 
 
-def establish_db(creds, wipe_db=False):
+def establish_db(creds, wipe_skin_data=False, wipe_price_data=False, wipe_trade_up_data=False):
     global WORKING_DB
 
     db = connect_to_db(creds)
@@ -29,13 +29,15 @@ def establish_db(creds, wipe_db=False):
 
     cursor = db.cursor()
 
-    if wipe_db:
-        # cursor.execute("DROP TABLE IF EXISTS crates CASCADE")
-        # cursor.execute("DROP TABLE IF EXISTS skins CASCADE")
+    if wipe_skin_data:
+        cursor.execute("DROP TABLE IF EXISTS crates CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS skins CASCADE")
+    if wipe_price_data:
+        cursor.execute("DROP TABLE IF EXISTS cheapest CASCADE")
+        cursor.execute("DROP TABLE IF EXISTS prices CASCADE")
+    if wipe_trade_up_data:
         cursor.execute("DROP TABLE IF EXISTS tradeups CASCADE")
         cursor.execute("DROP TABLE IF EXISTS tradeup_skins CASCADE")
-        # cursor.execute("DROP TABLE IF EXISTS cheapest CASCADE")
-        # cursor.execute("DROP TABLE IF EXISTS prices CASCADE")
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS crates (

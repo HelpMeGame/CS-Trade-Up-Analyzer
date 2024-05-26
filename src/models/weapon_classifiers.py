@@ -302,7 +302,9 @@ def get_wear_margin(wear: float):
         return 0
 
     # find "border" value, where wear passes into next rating
-    if wear_enum == WearsToStr.FACTORYNEW:
+    if wear == 1:
+        return 1
+    elif wear_enum == WearsToStr.FACTORYNEW:
         border = 0
     elif wear_enum == WearsToStr.MINWEAR:
         border = 0.07
