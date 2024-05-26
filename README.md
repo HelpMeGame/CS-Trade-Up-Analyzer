@@ -79,7 +79,7 @@ Once gathered, the information is then systematically parsed by crate. The cheap
 ## Trade Up Generation
 The final and second-most complex step is the generation of valid trade ups. Due to the nature of the algorithm, a large chunk of this process is trial-and-error brute forcing. To understand how this section works though, a deeper understanding of trade ups is required.
 
-In any given instance, a trade up consists of 10 skins of the same rarity. In the worst case scenario, that means 372 skins (Mil-Spec rarity) to potentially combine. Now by addressing each individual trade up, this process would take $$372^{10}$$ comparisons. That's a lot of time.
+In any given instance, a trade up consists of 10 skins of the same rarity. In the worst case scenario, that means 372 skins (Mil-Spec rarity) to potentially combine. Now by addressing each individual trade up, this process would take 372<sup>10</sup> comparisons. That's a lot of time.
 
 However, by using a few clever tricks, the process can be sped up significantly. In particular, only ever using 2 skins in a trade up, increasing the chance of success. In addition, only the cheapst skin of a crate's rarity teir needs to be analyzed, as all skins above that price will have no further effect other than an increased base price.
 
