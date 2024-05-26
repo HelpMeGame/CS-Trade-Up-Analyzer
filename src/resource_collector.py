@@ -7,7 +7,7 @@ src/resource_collector.py
 Developed by Keagan Bowman
 Copyright 2024
 
-Collects the resources required for trade up generation
+Collects the resources required for trade up generation from extracted game files
 
 """
 

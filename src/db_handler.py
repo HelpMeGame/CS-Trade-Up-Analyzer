@@ -7,7 +7,7 @@ src/db-handler.py
 Developed by Keagan Bowman
 Copyright 2024
 
-Database operation handler for requests
+Database operation handler for requests. Uses postgreSQL.
 
 """
 

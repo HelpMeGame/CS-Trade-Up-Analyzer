@@ -1,3 +1,16 @@
+"""
+
+CS Trade Up Analyzer
+
+src/market_handler.py
+
+Developed by Keagan Bowman
+Copyright 2024
+
+Steam endpoint interaction scripts. Meant to gather pricing information and find the cheapest skins in a case.
+
+"""
+
 from models.weapon_classifiers import WearsToInt, WeaponIntToStr, get_valid_wears, wear_int_enum_to_str_enum
 from urllib.parse import quote
 import requests as req

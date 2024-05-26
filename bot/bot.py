@@ -1,3 +1,16 @@
+"""
+
+CS Trade Up Analyzer
+
+bot/bot.py
+
+Developed by Keagan Bowman
+Copyright 2024
+
+Discord bot integration using pycord to allow for better manipulation and exploration of generated results
+"""
+
+
 import os
 import pathlib
 import discord

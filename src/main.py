@@ -8,15 +8,13 @@ Developed by Keagan Bowman
 Copyright 2024
 
 Main file for analyzer start up. Attempts to use all combinations of Counter Strike weapon skins and
-Steam Community Market price data to identify ideal trade ups with a net positive result.
+Steam Community Market price data to identify trade ups with both a net positive and negative result.
 
 Things to check/do:
 StatTracks
 Multi-step trade ups
 Steam inventory scanner
-Discord bot integration reworks
-Check all skins from crate, not just cheapest? Maybe sort by cheapest first.
-Trade up generation should be based on buy orders, not sell orders
+Trade up generation should be based on buy orders, not sell orders -> special circumstances
 """
 
 import os
