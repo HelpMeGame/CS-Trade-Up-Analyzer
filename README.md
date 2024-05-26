@@ -30,25 +30,25 @@ Before getting into the meat of this algorithm, it's important to know a few thi
 
 The first feature is that of success chance. The more skins you add from different crate or collection, the more possible outcomes. In order to deal with this, `Counter-Strike 2` uses a weight system in trade ups. This can be expressed as the following equation:
 
-$$\text{total_tickets} = (\text{Skin 1 Count * Skin 1 Case Possibilities}) + (\text{Skin 2 Count * Skin 2 Case Possibilities})$$
+$$\text{Total Tickets} = (\text{Skin 1 Count * Skin 1 Case Possibilities}) + (\text{Skin 2 Count * Skin 2 Case Possibilities})$$
 
 In order to get a better understanding of this formula, consider the following scenario, in which two skins are being used in a trade up. Skin 1 is being used 3 times in the trade up, and can result in 2 skins. Skin 2 is being used 7 times in the trade up, and can result in 4 skins. The formula would look like the following:
 
-$$\text{total_tickets} = (3*2)+(7*4)$$
+$$\text{Total Tickets} = (3*2)+(7*4)$$
 
-In this instance, `total_tickets` would be equal to `34`. Now say we wanted to calculate the chance of getting a specifc skin out of the trade up. In order to do so, we'd divide the total tickets by the number of that skin we put in. Referencing the earlier example, say we want to figure out the chance of getting Skin A from Skin 1's case. The formula would appear as the following:
+In this instance, `Total Tickets` would be equal to `34`. Now say we wanted to calculate the chance of getting a specific skin out of the trade up. In order to do so, we'd divide the total tickets by the number of that skin we put in. Referencing the earlier example, say we want to figure out the chance of getting Skin A from Skin 1's case. The formula would appear as the following:
 
-$$\text{chance} = 3 / 34$$
+$$\text{Chance} = 3 / 34$$
 
 Our chance to get Skin A from this trade up would then be `0.0882`, or about `9%`. With this concept in mind, we can move on to the next and equally important feature of trade up prediction.
 
 When dealing with predicting the resulting skin's wear rating, we need to take into account the wear rating of all input skins, and some information from the resulting skin as well. This means that there will *not* be a set wear rating outcome for all skins involved in a trade up process, and two skins from the same crate may end up with differing results.
 
-Luckily, the algorithm for this is pretty straight forward and the data is easily gatherable. The formula is as follows:
+Luckily, the algorithm for this is pretty straight forward and the data is easily gather-able. The formula is as follows:
 
-$$\text{estimated_wear} = ((\text{goal_max_wear - goal_min_wear}) * \text{average_input_wears}) + \text{goal_min_wear}$$
+$$\text{Estimated Wear} = ((\text{Goal Max Wear - Goal Min Wear}) * \text{Average Input Wears}) + \text{Goal Min Wear}$$
 
-It's important to note that `average_input_wears` is the average of all the inputted skin's wear values. This is both good and bad, meaning that skins with outlying high wear values may negatively impact the resulting skin's wear rating, but also that a static and predictable skin rating can serve as an upper bound for prediction.
+It's important to note that `Average Input Wears` is the average of all the inputted skin's wear values, and the "goal" wears are the maximum and minimum wears for the target skin in a trade up. This formula is both good and bad, meaning that skins with outlying high wear values may negatively impact the resulting skin's wear rating, but also that a static and predictable skin rating can serve as an upper bound for prediction.
 
 With these concepts of `Counter-Strike 2` skin trade ups in mind, the algorithm described below should hopefully make decent sense.
 
