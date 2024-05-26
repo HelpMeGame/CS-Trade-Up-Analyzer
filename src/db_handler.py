@@ -528,7 +528,7 @@ async def get_tradeups_by_criteria(rarity: int, wear: int, weapon: int, skin_nam
     criteria = [
         "((%s <= skin_1_max_wear AND %s >= skin_1_max_wear) AND (%s <= skin_2_max_wear AND %s >= skin_2_max_wear))",
         "input_price >= %s AND input_price <= %s", "%s <= roi_10 AND %s >= roi_10",
-        "(%s >= skin_1_margin AND %s >= skin_2_margin)"
+        "(%s <= skin_1_margin AND %s <= skin_2_margin)"
     ]
     values = [min_wear, max_wear, min_wear, max_wear, lower_bound, upper_bound, lower_roi, upper_roi, max_margin,
               max_margin]
