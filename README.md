@@ -38,7 +38,7 @@ $$\text{Total Tickets} = (3 * 2) + (7 * 4)$$
 
 In this instance, `Total Tickets` would be equal to `34`. Now say we wanted to calculate the chance of getting a specific skin out of the trade up. In order to do so, we'd divide the total tickets by the number of that skin we put in. Referencing the earlier example, say we want to figure out the chance of getting Skin A from Skin 1's case. The formula would appear as the following:
 
-$$\text{Chance} = 3 / 34$$
+$$\text{Chance} = \frac{3}{34}$$
 
 Our chance to get Skin A from this trade up would then be `0.0882`, or about `9%`. With this concept in mind, we can move on to the next and equally important feature of trade up prediction.
 
