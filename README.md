@@ -2,6 +2,8 @@
 
 An algorithm that uses the Steam Community Market to gather price data and then analyze them to find the most profitable possible combinations for trade ups.
 
+**Please note: this is still in development. I highly recommend double and then triple checking any results, as they can - and most likely will - have errors. This tool should in no way shape or form be the sole influencer of a choice to attempt a Counter Strike trade up.**
+
 ---
 
 ## Requirements
